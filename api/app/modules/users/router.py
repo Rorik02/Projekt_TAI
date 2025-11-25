@@ -22,11 +22,3 @@ def login_user(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {"access_token": token}
-
-@router.post("/register", response_model=UserOut)
-def register_user(data: UserCreate, db: Session = Depends(get_db)):
-    # sprawdzenie emaila
-    if db.query(User).filter(User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Użytkownik z takim e-mailem już istnieje")
-
-    return create_user(db, data)
