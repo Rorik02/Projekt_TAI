@@ -1,14 +1,18 @@
-// src/pages/RegisterPage.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 export default function RegisterPage() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone_number: "",
+    prefix: "+48",
     password: "",
+    confirm_password: "",
     role: "Klient",
     street: "",
     city: "",
@@ -18,84 +22,109 @@ export default function RegisterPage() {
     data_processing_consent: true,
   });
 
-  const [responseMessage, setResponseMessage] = useState(null);
+  const [emailValid, setEmailValid] = useState(null);
+  const [phoneValid, setPhoneValid] = useState(null);
   const [passwordError, setPasswordError] = useState(null);
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [responseMessage, setResponseMessage] = useState(null);
 
-  const navigate = useNavigate();
+  // REGEX-y
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{9,}$/;
 
   function handleChange(e) {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
 
-    // Walidacja hasła
-    if (name === "password") {
-      const valid =
-        value.length >= 9 &&
-        /[A-Z]/.test(value) &&
-        /[0-9]/.test(value) &&
-        /[^A-Za-z0-9]/.test(value);
+  // najpierw aktualizujemy stan lokalnie (nie w React!)
+  const updatedForm = { ...form, [name]: value };
 
-      if (!valid) {
-        setPasswordError(
-          "Hasło nie spełnia wymagań. Wymagana jest duża litera, cyfra i znak specjalny."
-        );
-      } else {
-        setPasswordError(null);
-      }
-    }
+  setForm(updatedForm);
 
-    setForm({ ...form, [name]: value });
+  // EMAIL
+  if (name === "email") {
+    setEmailValid(emailRegex.test(value));
   }
+
+  // TELEFON
+  if (name === "phone_number") {
+    setPhoneValid(value.length === 9);
+  }
+
+  // HASŁO – zawsze sprawdzamy na podstawie updatedForm
+  if (name === "password" || name === "confirm_password") {
+    const pass = updatedForm.password;
+    const confirm = updatedForm.confirm_password;
+
+    if (!passwordRegex.test(pass)) {
+      setPasswordError("Hasło nie spełnia wymagań.");
+    } else if (confirm && pass !== confirm) {
+      setPasswordError("Hasła nie są takie same.");
+    } else {
+      setPasswordError(null);
+    }
+  }
+}
 
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (passwordError) {
-      setResponseMessage("Błąd: Hasło nie spełnia wymagań.");
+    if (!emailValid) {
+      setResponseMessage("Niepoprawny adres email.");
       return;
     }
+
+    if (!phoneValid) {
+      setResponseMessage("Numer telefonu musi mieć 9 cyfr.");
+      return;
+    }
+
+    if (passwordError) {
+      setResponseMessage(passwordError);
+      return;
+    }
+
+    const payload = {
+      ...form,
+      phone_number: `${form.prefix}${form.phone_number}`,
+    };
 
     try {
       const res = await fetch("http://127.0.0.1:8000/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const err = await res.json();
-
-        if (err.detail && err.detail.includes("Konto o podanym email już istnieje")) {
-          setResponseMessage("Błąd: Konto o podanym email już istnieje");
+        if (err.detail === "Konto o podanym email już istnieje") {
+          setResponseMessage("Konto o podanym email już istnieje");
         } else {
-          setResponseMessage("Błąd: Nie udało się utworzyć konta.");
+          setResponseMessage("Nie udało się utworzyć konta.");
         }
         return;
       }
 
-      setResponseMessage("Konto zostało utworzone pomyślnie!");
-
-      // przekierowanie po 2 sekundach
-      setTimeout(() => navigate("/app"), 2000);
+      setResponseMessage(null);
+      navigate("/app");
 
     } catch (error) {
-      setResponseMessage("Błąd: Brak połączenia z serwerem.");
+      setResponseMessage("Błąd połączenia z serwerem.");
     }
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-200 flex items-center justify-center px-6 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-6 py-10">
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-100 dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md"
+        className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg"
       >
         <h1 className="text-3xl font-bold mb-6 text-center">Rejestracja</h1>
 
         <div className="grid gap-4">
 
-          {/* Imię */}
           <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
+            className="p-3 rounded bg-gray-700"
             type="text"
             name="first_name"
             placeholder="Imię"
@@ -103,9 +132,8 @@ export default function RegisterPage() {
             required
           />
 
-          {/* Nazwisko */}
           <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
+            className="p-3 rounded bg-gray-700"
             type="text"
             name="last_name"
             placeholder="Nazwisko"
@@ -113,30 +141,59 @@ export default function RegisterPage() {
             required
           />
 
-          {/* Email */}
-          <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
-            type="email"
-            name="email"
-            placeholder="Email"
-            onChange={handleChange}
-            required
-          />
+          {/* EMAIL */}
+          <div>
+            <input
+              className="p-3 rounded bg-gray-700 w-full"
+              type="email"
+              name="email"
+              placeholder="Email"
+              onChange={handleChange}
+              required
+            />
+            {emailValid === false && (
+              <p className="text-red-400 text-sm mt-1">Niepoprawny adres email.</p>
+            )}
+            {emailValid === true && (
+              <p className="text-green-400 text-sm mt-1">Email poprawny.</p>
+            )}
+          </div>
 
-          {/* Telefon */}
-          <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
-            type="text"
-            name="phone_number"
-            placeholder="Numer telefonu"
-            onChange={handleChange}
-            required
-          />
+          {/* TELEFON + PREFIX */}
+          <div className="flex gap-2">
+            <select
+              name="prefix"
+              className="p-3 rounded bg-gray-700 w-24"
+              onChange={handleChange}
+            >
+              <option value="+48">+48 PL</option>
+              <option value="+49">+49 GER</option>
+              <option value="+44">+44 UK</option>
+              <option value="+1">+1 USA</option>
+            </select>
 
-          {/* Hasło + ikonka */}
+            <div className="w-full">
+              <input
+                className="p-3 rounded bg-gray-700 w-full"
+                type="text"
+                name="phone_number"
+                placeholder="Numer telefonu"
+                onChange={handleChange}
+                required
+              />
+              {phoneValid === false && (
+                <p className="text-red-400 text-sm mt-1">Numer telefonu musi mieć 9 cyfr.</p>
+              )}
+              {phoneValid === true && (
+                <p className="text-green-400 text-sm mt-1">Numer poprawny.</p>
+              )}
+            </div>
+          </div>
+
+          {/* HASŁO */}
           <div className="relative">
             <input
-              className="p-2 rounded w-full bg-white dark:bg-gray-700"
+              className="p-3 rounded bg-gray-700 w-full"
               type="password"
               name="password"
               placeholder="Hasło"
@@ -144,37 +201,37 @@ export default function RegisterPage() {
               required
             />
 
-            {/* Kwadrat z "i" */}
-            <button
-              type="button"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              className="absolute right-2 top-2 w-6 h-6 flex items-center justify-center bg-gray-500 text-white rounded cursor-pointer"
-            >
-              i
-            </button>
-
-            {/* Tooltip */}
-            {showTooltip && (
-              <div className="absolute right-0 mt-2 w-64 bg-gray-800 text-white text-sm p-3 rounded shadow-lg z-10">
-                <ul className="list-disc ml-4 space-y-1">
-                  <li>Przynajmniej 9 znaków</li>
+            {/* TOOLTIP */}
+            <div className="absolute right-2 top-3 group cursor-pointer">
+              <span className="bg-gray-600 px-2 py-1 rounded text-sm font-bold">i</span>
+              <div className="hidden group-hover:block absolute right-0 mt-2 w-64 bg-gray-700 text-white p-2 rounded shadow-lg text-sm">
+                <ul className="list-disc ml-4">
+                  <li>Min. 9 znaków</li>
                   <li>Jedna duża litera</li>
                   <li>Jedna cyfra</li>
                   <li>Jeden znak specjalny</li>
                 </ul>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* BŁĄD POD HASŁEM */}
+          {/* POTWIERDZENIE HASŁA */}
+          <input
+            className="p-3 rounded bg-gray-700"
+            type="password"
+            name="confirm_password"
+            placeholder="Potwierdź hasło"
+            onChange={handleChange}
+            required
+          />
+
+          {/* BŁĄD HASEŁ */}
           {passwordError && (
-            <p className="text-red-500 text-sm">{passwordError}</p>
+            <p className="text-red-400 text-sm -mt-2">{passwordError}</p>
           )}
 
-          {/* Ulica */}
           <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
+            className="p-3 rounded bg-gray-700"
             type="text"
             name="street"
             placeholder="Ulica"
@@ -182,9 +239,8 @@ export default function RegisterPage() {
             required
           />
 
-          {/* Miasto */}
           <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
+            className="p-3 rounded bg-gray-700"
             type="text"
             name="city"
             placeholder="Miasto"
@@ -192,9 +248,8 @@ export default function RegisterPage() {
             required
           />
 
-          {/* Kod pocztowy */}
           <input
-            className="p-2 rounded bg-white dark:bg-gray-700"
+            className="p-3 rounded bg-gray-700"
             type="text"
             name="postal_code"
             placeholder="Kod pocztowy"
@@ -203,28 +258,23 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Przycisk */}
         <button
           type="submit"
-          className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold shadow"
+          className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold shadow"
         >
           Utwórz konto
         </button>
 
-        {/* Komunikat pod formularzem */}
         {responseMessage && (
-          <p className={`text-center mt-4 font-semibold ${
-            responseMessage.includes("Błąd") ? "text-red-500" : "text-green-500"
-          }`}>
+          <p className="text-center mt-4 text-red-400 font-semibold">
             {responseMessage}
           </p>
         )}
 
-        {/* Przycisk powrotu */}
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="mt-6 w-full bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold shadow"
+          className="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg"
         >
           Powrót
         </button>
