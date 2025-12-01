@@ -282,5 +282,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-/* TEST GITHUB */
