@@ -30,8 +30,7 @@ export default function App() {
           <Route path="/contact" element={<><Navbar /><ContactPage /></>} />
           
           {/* --- Panel Właściciela --- */}
-          <Route path="/owner-login" element={<OwnerLogin />} />
-          <Route path="/dashboard" element={<OwnerDashboard />} />
+          <Route path="/dashboard" element={<><Navbar /><OwnerDashboard/></>} />
           
           {/* Placeholder */}
           <Route path="/app" element={<AppPage />} />

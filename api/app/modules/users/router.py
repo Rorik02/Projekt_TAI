@@ -21,4 +21,12 @@ def login_user(data: UserLogin, db: Session = Depends(get_db)):
     if not token:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {"access_token": token}
+
+    user = db.query(User).filter(User.email == data.email).first()
+
+    return {
+        "access_token": token,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role": user.role
+    }

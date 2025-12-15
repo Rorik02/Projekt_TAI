@@ -24,6 +24,13 @@ const OwnerLogin = () => {
       
 
       const data = await response.json();
+      localStorage.setItem("owner_id", data.owner_id);
+      localStorage.setItem("owner_username", username);
+
+      localStorage.setItem("user_name", data.first_name);
+      localStorage.setItem("user_role", data.role);       
+
+      
 
       if (!response.ok) {
         setError(data.detail || "Logowanie nieudane");

@@ -1,10 +1,20 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// Usuwamy import './Navbar.css', bo używamy Tailwinda
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("owner_username"); // Sprawdzamy czy ktoś jest zalogowany (wg logiki kolegi)
+  
+  // Pobieramy dane
+  const userName = localStorage.getItem("user_name");
+  const userLastName = localStorage.getItem("user_last_name");
+  const userRole = localStorage.getItem("user_role"); // Pobieramy surową rolę z bazy
+  
+  const isLoggedIn = !!userName;
+
+  // SPRAWDZANIE ROLI (Ulepszone)
+  // Zamieniamy na małe litery i usuwamy spacje, żeby mieć pewność
+  const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
+  const isOwner = normalizedRole === "właściciel" || normalizedRole === "owner";
 
   const handleLogout = () => {
     localStorage.clear();
@@ -12,46 +22,81 @@ const Navbar = () => {
     window.location.reload();
   };
 
+  const getInitials = (name, lastName) => {
+    const firstInitial = name ? name.charAt(0) : "";
+    const lastInitial = lastName ? lastName.charAt(0) : "";
+    return (firstInitial + lastInitial).toUpperCase();
+  };
+
   return (
-    <div className="bg-purple-600 dark:bg-purple-900 text-white shadow-md">
+    <div className="bg-purple-600 dark:bg-purple-900 text-white shadow-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           
-          {/* Logo / Nazwa */}
+          {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold tracking-wider hover:text-gray-200 transition">
-              FoodAPP
+            <Link to="/" className="flex items-center gap-2 group">
+               <div className="w-8 h-8 bg-white text-purple-600 rounded-full flex items-center justify-center font-bold text-xl group-hover:rotate-12 transition">F</div>
+               <span className="text-2xl font-bold tracking-wider hover:text-gray-200 transition">FoodAPP</span>
             </Link>
           </div>
 
-          {/* Linki */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              <Link to="/restaurants" className="hover:bg-purple-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                Restauracje
-              </Link>
-              <Link to="/cuisines" className="hover:bg-purple-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                Kuchnie
-              </Link>
-              
-              {token ? (
-                <>
-                  <Link to="/dashboard" className="bg-purple-700 hover:bg-purple-600 px-3 py-2 rounded-md text-sm font-medium transition shadow">
-                    Panel Właściciela
-                  </Link>
+          {/* Linki Główne */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/restaurants" className="hover:text-purple-200 font-medium transition">
+              Restauracje
+            </Link>
+            <Link to="/cuisines" className="hover:text-purple-200 font-medium transition">
+              Kuchnie
+            </Link>
+            
+            {/* OPCJA DLA WŁAŚCICIELA (Widoczna na głównym pasku) */}
+            {isLoggedIn && isOwner && (
+                <Link 
+                  to="/dashboard" 
+                  className="bg-purple-700 hover:bg-purple-500 text-white px-3 py-2 rounded-md font-medium transition shadow-sm border border-purple-500"
+                >
+                  Moje Restauracje
+                </Link>
+            )}
+
+            {/* SEKCJA UŻYTKOWNIKA (Prawa strona) */}
+            {isLoggedIn ? (
+              <div className="flex items-center gap-4 ml-4 pl-6 border-l border-purple-400">
+                
+                {/* Avatar (Inicjały) */}
+                <div className="relative group cursor-default">
+                  <div className="w-12 h-12 rounded-full bg-white text-purple-700 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-purple-300">
+                    {getInitials(userName, userLastName)}
+                  </div>
+                </div>
+
+                {/* Tekst: Rola + Wyloguj */}
+                <div className="flex flex-col justify-center">
+                  <span className="text-xs uppercase tracking-widest text-purple-200 font-semibold mb-1">
+                    {userRole || "Użytkownik"}
+                  </span>
+                  
                   <button 
                     onClick={handleLogout}
-                    className="hover:bg-red-500 px-3 py-2 rounded-md text-sm font-medium transition"
+                    className="text-sm text-left font-bold text-white hover:text-red-200 transition flex items-center gap-1"
                   >
                     Wyloguj
                   </button>
-                </>
-              ) : (
-                <Link to="/owner-login" className="hover:bg-purple-500 px-3 py-2 rounded-md text-sm font-medium transition">
-                  Strefa Partnera
+                </div>
+
+              </div>
+            ) : (
+              /* Stan wylogowany */
+              <div className="flex items-center gap-3 ml-4">
+                <Link to="/login" className="px-4 py-2 rounded-lg hover:bg-purple-500 transition border border-transparent hover:border-purple-300">
+                  Zaloguj
                 </Link>
-              )}
-            </div>
+                <Link to="/register" className="px-4 py-2 bg-white text-purple-700 rounded-lg font-bold hover:bg-gray-100 transition shadow">
+                  Rejestracja
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

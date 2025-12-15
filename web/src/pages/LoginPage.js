@@ -1,40 +1,59 @@
-// src/pages/LoginPage.js
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // dla przekierowania po zalogowaniu
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // Przechowuje wiadomość o błędzie
-  const [success, setSuccess] = useState(""); // Przechowuje sukces
+  const [error, setError] = useState(""); 
+  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate(); // Hook do przekierowania po udanym logowaniu
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Wysyłamy dane do backendu
     try {
       const response = await fetch("http://127.0.0.1:8000/users/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Jeśli logowanie jest udane, przekierowujemy do aplikacji
-        setSuccess("Zalogowano pomyślnie!");
-        setTimeout(() => navigate("/restaurants"), 1000); // Przekierowanie po 1 sekundzie
+        // 1. Zapisujemy dane potrzebne do sesji i Avatara
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user_name", data.first_name);
+        localStorage.setItem("user_last_name", data.last_name); // Ważne dla inicjałów w kółku
+        
+        // Pobieramy rolę
+        const rawRole = data.role || "klient";
+        const userRole = rawRole.trim().toLowerCase();
+        
+        localStorage.setItem("user_role", data.role);
+        
+        if (userRole === "właściciel" || userRole === "owner") {
+             localStorage.setItem("owner_username", email);
+        }
+
+        // 2. PRZEKIEROWANIE (POPRAWIONE)
+        // Niezależnie czy to Klient, czy Właściciel -> idziemy do restauracji
+        // Właściciel ma przycisk "Panel" w Navbarze, jeśli będzie chciał tam wejść.
+        navigate("/restaurants");
+        
+        window.location.reload(); 
+
       } else {
-        // Jeśli logowanie nieudane, pokazujemy błąd
-        setError(data.detail || "Błąd logowania");
+        setError(data.detail || "Błędny email lub hasło");
       }
     } catch (error) {
+      console.error(error);
       setError("Błąd połączenia z serwerem");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,13 +67,12 @@ export default function LoginPage() {
               E-mail
             </label>
             <input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 mt-2 border border-gray-300 rounded-lg text-black dark:text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 mt-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             />
           </div>
 
@@ -65,31 +83,27 @@ export default function LoginPage() {
             <input
               type="password"
               id="password"
-              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 mt-2 border border-gray-300 rounded-lg text-black dark:text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full p-2 mt-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm mb-4">{error}</div>
-          )}
-
-          {success && (
-            <div className="text-green-600 text-sm mb-4">{success}</div>
+            <div className="text-red-600 text-sm mb-4 text-center">{error}</div>
           )}
 
           <button
             type="submit"
-            className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600"
+            disabled={loading}
+            className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-600 disabled:opacity-50"
           >
-            Zaloguj się
+            {loading ? "Logowanie..." : "Zaloguj się"}
           </button>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center text-sm">
           <p>
             Nie masz konta?{" "}
             <a href="/register" className="text-purple-600 hover:underline">
