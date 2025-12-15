@@ -48,6 +48,22 @@ def create_restaurant(restaurant: schemas.RestaurantCreate, db: Session = Depend
     db_restaurant.cuisines = restaurant.cuisines 
     return db_restaurant
 
+@router.delete("/{restaurant_id}")
+def delete_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
+    # 1. Szukamy restauracji
+    restaurant = db.query(models.Restaurant).filter(models.Restaurant.id == restaurant_id).first()
+    
+    # 2. Jeśli nie ma, zwracamy błąd 404
+    if not restaurant:
+        raise HTTPException(status_code=404, detail="Restaurant not found")
+    
+    # 3. Jeśli jest - usuwamy
+    db.delete(restaurant)
+    db.commit()
+    
+    return {"message": "Restaurant deleted successfully"}
+
+
 # Pobieranie produktów danej restauracji
 @router.get("/{restaurant_id}/products", response_model=List[schemas.ProductOut])
 def get_products(restaurant_id: int, db: Session = Depends(get_db)):
