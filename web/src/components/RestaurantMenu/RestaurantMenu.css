@@ -1,0 +1,66 @@
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 15px 0 0 0;
+  width: 100%;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between; /* left: name+price, right: actions */
+  align-items: center;
+  padding: 12px 20px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.menu-left {
+  display: flex;
+  gap: 10px; /* space between name and price */
+  font-weight: 500;
+}
+
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.menu-right span.buy {
+  color: #007bff;
+  cursor: pointer;
+}
+
+/* Updated button styles */
+.menu-right button.add {
+  background-color: #28a745; /* green */
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.menu-right button.add:hover {
+  background-color: #218838;
+}
+
+.menu-right button.remove {
+  background-color: #dc3545; /* red */
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.menu-right button.remove:hover {
+  background-color: #c82333;
+}

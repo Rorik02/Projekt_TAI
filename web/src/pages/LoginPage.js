@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (response.ok) {
         // Jeśli logowanie jest udane, przekierowujemy do aplikacji
         setSuccess("Zalogowano pomyślnie!");
-        setTimeout(() => navigate("/app"), 1000); // Przekierowanie po 1 sekundzie
+        setTimeout(() => navigate("/restaurants"), 1000); // Przekierowanie po 1 sekundzie
       } else {
         // Jeśli logowanie nieudane, pokazujemy błąd
         setError(data.detail || "Błąd logowania");

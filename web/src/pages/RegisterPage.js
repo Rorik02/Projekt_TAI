@@ -106,7 +106,7 @@ export default function RegisterPage() {
       }
 
       setResponseMessage(null);
-      navigate("/app");
+      navigate("/restaurants");
 
     } catch (error) {
       setResponseMessage("Błąd połączenia z serwerem.");
