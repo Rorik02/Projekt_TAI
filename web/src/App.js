@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar/Navbar"; // Upewnij się, że skopiowałeś folder Navbar do components
+import Navbar from "./components/Navbar/Navbar";
 
 // --- Twoje strony ---
 import HomePage from "./pages/HomePage";       
@@ -8,9 +8,6 @@ import LoginPage from "./pages/LoginPage";
 import AppPage from "./pages/AppPage";
 import RestaurantsHome from "./pages/RestaurantsHome";
 
-// --- Strony Kolegi ---
-// Zakładam, że skopiowałeś foldery kolegi (Home, OwnerDashboard, itp.) do folderu 'pages'
-//import RestaurantsHome from "./pages/Home"; // <-- WAŻNE: Ścieżka do pliku Home.jsx wewnątrz folderu Home
 import OwnerDashboard from "./pages/OwnerDashboard";
 import OwnerLogin from "./pages/OwnerLogin";
 import CuisinesPage from "./pages/CuisinesPage";

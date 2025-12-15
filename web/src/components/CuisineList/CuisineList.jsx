@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// Usuwamy import "./CuisineList.css";
+
 import RestaurantMenu from "../RestaurantMenu/RestaurantMenu";
 
 const categories = [
@@ -33,8 +33,8 @@ const CuisineList = () => {
   const handleCategoryClick = (cuisine) => {
     const newCuisine = selectedCuisine === cuisine ? null : cuisine;
     setSelectedCuisine(newCuisine);
-    setOpenRestaurantId(null); // zamykamy otwarte menu przy zmianie filtra
-    fetchRestaurants(newCuisine); // jeśli null, pobierze wszystkie (lub nic, zależnie od logiki backendu)
+    setOpenRestaurantId(null); 
+    fetchRestaurants(newCuisine); 
   };
 
   const handleRestaurantClick = (id) => {

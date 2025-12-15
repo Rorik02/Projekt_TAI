@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-// Usuwamy import "./RestaurantMenu.css";
+
 
 const RestaurantMenu = ({ restaurantId }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Pamiętaj, aby port backendu (8000) zgadzał się z Twoim
     fetch(`http://127.0.0.1:8000/restaurants/${restaurantId}/products`)
       .then((res) => res.json())
       .then((data) => {

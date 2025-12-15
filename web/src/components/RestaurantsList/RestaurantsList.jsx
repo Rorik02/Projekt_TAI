@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-// Usuwamy import "./RestaurantsList.css"; 
 import RestaurantMenu from "../RestaurantMenu/RestaurantMenu";
 
 const RestaurantsList = () => {

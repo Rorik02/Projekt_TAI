@@ -1,5 +1,5 @@
 import React from 'react';
-// Usuwamy import './RestaurantsPage.css'
+
 import RestaurantsList from '../../components/RestaurantsList/RestaurantsList';
 
 const RestaurantsPage = () => {

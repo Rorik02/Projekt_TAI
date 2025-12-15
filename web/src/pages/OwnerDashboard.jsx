@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// Usuwamy import "./OwnerDashboard.css";
 
 const Dashboard = () => {
   const ownerUsername = localStorage.getItem("owner_username");
@@ -10,9 +9,7 @@ const Dashboard = () => {
   const loadRestaurants = async () => {
     if (!ownerUsername) return;
     try {
-      // Pamiętaj o URL - użyliśmy /restaurants w Twoim nowym routerze, 
-      // ale jeśli chcesz filtrować po właścicielu, backend musi to obsługiwać.
-      // Na razie pobieramy wszystkie (zgodnie z uproszczonym backendem).
+      
       const res = await fetch(`http://127.0.0.1:8000/restaurants`);
       if (!res.ok) throw new Error("Failed to fetch restaurants");
       const data = await res.json();

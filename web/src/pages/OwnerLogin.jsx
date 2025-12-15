@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Usuwamy import "./OwnerLogin.css";
 
 const OwnerLogin = () => {
   const [username, setUsername] = useState("");
@@ -15,10 +14,6 @@ const OwnerLogin = () => {
     setLoading(true);
 
     try {
-      // Uwaga: Tutaj zakładam, że używasz Twojego routera użytkowników (/users/login)
-      // lub zostawiłeś logikę kolegi (/owners/login).
-      // Jeśli chcesz użyć logiki kolegi, musisz mieć endpoint /owners/login w backendzie.
-      // Poniżej przykład dla endpointu kolegi (jeśli go zaimplementowałeś w main.py):
       
       const response = await fetch("http://127.0.0.1:8000/owners/login", { // Sprawdź czy ten endpoint istnieje w Twoim backendzie!
         method: "POST",
@@ -26,14 +21,7 @@ const OwnerLogin = () => {
         body: JSON.stringify({ username, password }),
       });
 
-      // Jeśli nie zaimplementowałeś /owners/login, użyj swojego /users/login:
-      /*
-      const response = await fetch("http://127.0.0.1:8000/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: username, password }), // Twoj backend oczekuje email
-      });
-      */
+      
 
       const data = await response.json();
 
