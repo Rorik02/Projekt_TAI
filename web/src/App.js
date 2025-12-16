@@ -19,7 +19,7 @@ export default function App() {
       <div className="App min-h-screen bg-white dark:bg-gray-900">
         
         <Routes>
-          {/* --- Ścieżki Publiczne (Twoje) --- */}
+          {/* --- Ścieżki Publiczne  --- */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

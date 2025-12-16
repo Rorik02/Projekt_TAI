@@ -1,124 +1,163 @@
-import React, { useEffect, useState } from "react";
-import RestaurantMenu from "../RestaurantMenu/RestaurantMenu";
+import React, { useState, useEffect } from 'react';
+import Map from '../Map/Map';
+
+
+const CATEGORIES = [
+  "Wszystkie", "Italian", "Japanese", "American", "Chinese", "Mexican",
+  "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
+];
 
 const RestaurantsList = () => {
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [minRating, setMinRating] = useState(0);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState(null);
+    const [restaurants, setRestaurants] = useState([]);
+    const [loading, setLoading] = useState(true);
+    
+    // --- STANY FILTRÓW ---
+    const [minRating, setMinRating] = useState(0);
+    const [selectedCuisine, setSelectedCuisine] = useState("Wszystkie");
 
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/restaurants")
-      .then((res) => res.json())
-      .then((data) => {
-        setRestaurants(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching restaurants:", err);
-        setLoading(false);
-      });
-  }, []);
+    useEffect(() => {
+        fetchRestaurants();
+    }, []);
 
-  if (loading) return (
-    <div className="flex justify-center items-center h-64 text-gray-500 dark:text-gray-400">
-      <p>Ładowanie restauracji...</p>
-    </div>
-  );
+    const fetchRestaurants = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/restaurants');
+            if (response.ok) {
+                const data = await response.json();
+                setRestaurants(data);
+            }
+        } catch (error) {
+            console.error("Błąd pobierania restauracji:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const filteredRestaurants = restaurants
-    .filter((r) => r.rating >= minRating)
-    .sort((a, b) => b.rating - a.rating);
+    // --- LOGIKA FILTROWANIA ---
+    const filteredRestaurants = restaurants.filter(restaurant => {
+        // 1. Filtr Oceny
+        if (restaurant.rating < minRating) return false;
+        
+        // 2. Filtr Kuchni
+        if (selectedCuisine !== "Wszystkie") {
+            // Sprawdzamy czy fraza (np. "Italian") znajduje się w stringu cuisines (np. "Italian, Pizza")
+            // Backend zwraca cuisines jako string lub listę - obsłużmy oba przypadki:
+            const cuisinesData = Array.isArray(restaurant.cuisines) 
+                ? restaurant.cuisines.join(" ") 
+                : restaurant.cuisines || "";
+            
+            if (!cuisinesData.toLowerCase().includes(selectedCuisine.toLowerCase())) {
+                return false;
+            }
+        }
+        return true;
+    });
 
-  return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-200">
-      
-      {/* Nagłówek i Filtr */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h1 className="text-3xl font-bold text-purple-700 dark:text-purple-400 mb-4 md:mb-0">
-          Dostępne Restauracje
-        </h1>
-
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-          <label htmlFor="rating-filter" className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Min. ocena:
-          </label>
-          <select
-            id="rating-filter"
-            value={minRating}
-            onChange={(e) => setMinRating(Number(e.target.value))}
-            className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            <option value={0}>Wszystkie</option>
-            <option value={1}>1 ⭐</option>
-            <option value={2}>2 ⭐</option>
-            <option value={3}>3 ⭐</option>
-            <option value={4}>4 ⭐</option>
-            <option value={5}>5 ⭐</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Lista Kart */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredRestaurants.length > 0 ? (
-          filteredRestaurants.map((restaurant) => (
-            <div 
-              key={restaurant.id} 
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
-            >
-              {/* Klikalna sekcja karty */}
-              <div
-                onClick={() =>
-                  setSelectedRestaurantId(
-                    selectedRestaurantId === restaurant.id ? null : restaurant.id
-                  )
-                }
-                className="cursor-pointer p-5"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
-                    {restaurant.name}
-                  </h2>
-                  <div className="flex items-center bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded text-yellow-700 dark:text-yellow-400 font-bold text-sm">
-                    {restaurant.rating} <span className="ml-1">⭐</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {restaurant.cuisines.map((cuisine, idx) => (
-                    <span 
-                      key={idx} 
-                      className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
-                    >
-                      {cuisine}
-                    </span>
-                  ))}
-                </div>
+    return (
+        // GŁÓWNY KONTENER - Układ Flexbox na pełną wysokość minus Navbar (ok. 80px)
+        <div className="flex h-[calc(100vh-80px)] overflow-hidden">
+            
+            {/* --- KOLUMNA LEWA: LISTA (Szerokość 40% lub stała na dużych ekranach) --- */}
+            <div className="w-full md:w-2/5 lg:w-1/3 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                 
-                <div className="mt-4 text-center">
-                    <span className="text-sm text-purple-600 dark:text-purple-400 hover:underline">
-                        {selectedRestaurantId === restaurant.id ? "Ukryj menu ▲" : "Zobacz menu ▼"}
-                    </span>
-                </div>
-              </div>
+                {/* NAGŁÓWEK Z FILTRAMI (Przyklejony na górze listy) */}
+                <div className="p-4 bg-white dark:bg-gray-800 shadow-sm z-10">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+                        Odkryj Restauracje ({filteredRestaurants.length})
+                    </h2>
+                    
+                    <div className="flex flex-col gap-3">
+                        {/* Filtr Kuchni */}
+                        <div>
+                            <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Rodzaj Kuchni</label>
+                            <select 
+                                value={selectedCuisine}
+                                onChange={(e) => setSelectedCuisine(e.target.value)}
+                                className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
+                            >
+                                {CATEGORIES.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
 
-              {/* Rozwijane Menu */}
-              {selectedRestaurantId === restaurant.id && (
-                <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 animate-fadeIn">
-                  <RestaurantMenu restaurantId={restaurant.id} />
+                        {/* Filtr Oceny */}
+                        <div>
+                            <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Minimalna ocena</label>
+                            <select 
+                                value={minRating}
+                                onChange={(e) => setMinRating(Number(e.target.value))}
+                                className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
+                            >
+                                <option value={0}>Wszystkie</option>
+                                <option value={3}>3.0+ ⭐</option>
+                                <option value={4}>4.0+ ⭐⭐</option>
+                                <option value={4.5}>4.5+ ⭐⭐⭐</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-              )}
+
+                {/* SCROLLOWALNA LISTA RESTAURACJI */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {loading ? (
+                        <p className="text-center text-gray-500 py-10">Ładowanie...</p>
+                    ) : filteredRestaurants.length === 0 ? (
+                        <div className="text-center py-10">
+                            <p className="text-gray-500 dark:text-gray-400">Brak wyników dla tych filtrów.</p>
+                            <button 
+                                onClick={() => { setMinRating(0); setSelectedCuisine("Wszystkie"); }}
+                                className="mt-2 text-purple-600 hover:underline text-sm font-bold"
+                            >
+                                Wyczyść filtry
+                            </button>
+                        </div>
+                    ) : (
+                        filteredRestaurants.map((restaurant) => (
+                            <div 
+                                key={restaurant.id} 
+                                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition cursor-pointer flex justify-between items-start group"
+                            >
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
+                                        {restaurant.name}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
+                                    </p>
+                                    
+                                    {/* Wyświetlanie adresu jeśli jest */}
+                                    {restaurant.address && (
+                                        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                            📍 {restaurant.address}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Ocena */}
+                                <div className="flex flex-col items-end">
+                                    <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                                        {restaurant.rating} ⭐
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
-          ))
-        ) : (
-          <p className="text-center col-span-full text-gray-500 text-lg mt-10">
-            Brak restauracji spełniających kryteria.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-};
+
+            {/* --- KOLUMNA PRAWA: MAPA --- */}
+            <div className="hidden md:block flex-1 bg-gray-200 dark:bg-gray-900 relative border-l border-gray-300 dark:border-gray-700 p-6">
+                
+                {/* Kontener "Karty" mapy - to on tworzy efekt ramki i cienia */}
+                <div className="w-full h-full bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 relative">
+                    <Map restaurants={filteredRestaurants} />
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
 
 export default RestaurantsList;
