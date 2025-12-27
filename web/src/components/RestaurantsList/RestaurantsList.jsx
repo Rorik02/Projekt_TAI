@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Map from '../Map/Map';
 
-
 const CATEGORIES = [
   "Wszystkie", "Italian", "Japanese", "American", "Chinese", "Mexican",
   "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
@@ -10,6 +9,9 @@ const CATEGORIES = [
 const RestaurantsList = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // 1. NOWY STAN: Przechowuje klikniętą restaurację
+    const [selectedRestaurant, setSelectedRestaurant] = useState(null);
     
     // --- STANY FILTRÓW ---
     const [minRating, setMinRating] = useState(0);
@@ -35,13 +37,9 @@ const RestaurantsList = () => {
 
     // --- LOGIKA FILTROWANIA ---
     const filteredRestaurants = restaurants.filter(restaurant => {
-        // 1. Filtr Oceny
         if (restaurant.rating < minRating) return false;
         
-        // 2. Filtr Kuchni
         if (selectedCuisine !== "Wszystkie") {
-            // Sprawdzamy czy fraza (np. "Italian") znajduje się w stringu cuisines (np. "Italian, Pizza")
-            // Backend zwraca cuisines jako string lub listę - obsłużmy oba przypadki:
             const cuisinesData = Array.isArray(restaurant.cuisines) 
                 ? restaurant.cuisines.join(" ") 
                 : restaurant.cuisines || "";
@@ -54,13 +52,12 @@ const RestaurantsList = () => {
     });
 
     return (
-        // GŁÓWNY KONTENER - Układ Flexbox na pełną wysokość minus Navbar (ok. 80px)
         <div className="flex h-[calc(100vh-80px)] overflow-hidden">
             
-            {/* --- KOLUMNA LEWA: LISTA (Szerokość 40% lub stała na dużych ekranach) --- */}
+            {/* --- KOLUMNA LEWA: LISTA --- */}
             <div className="w-full md:w-2/5 lg:w-1/3 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                 
-                {/* NAGŁÓWEK Z FILTRAMI (Przyklejony na górze listy) */}
+                {/* NAGŁÓWEK Z FILTRAMI */}
                 <div className="p-4 bg-white dark:bg-gray-800 shadow-sm z-10">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                         Odkryj Restauracje ({filteredRestaurants.length})
@@ -116,7 +113,14 @@ const RestaurantsList = () => {
                         filteredRestaurants.map((restaurant) => (
                             <div 
                                 key={restaurant.id} 
-                                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition cursor-pointer flex justify-between items-start group"
+                                // 2. KLIKNIĘCIE: Ustawiamy wybraną restaurację
+                                onClick={() => setSelectedRestaurant(restaurant)}
+                                // Dodajemy warunkowy styl (border), żebyś wiedział co kliknąłeś
+                                className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer flex justify-between items-start group border ${
+                                    selectedRestaurant?.id === restaurant.id 
+                                    ? "border-purple-500 ring-1 ring-purple-500" // Aktywny
+                                    : "border-gray-100 dark:border-gray-700" // Nieaktywny
+                                }`}
                             >
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
@@ -126,15 +130,13 @@ const RestaurantsList = () => {
                                         {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
                                     </p>
                                     
-                                    {/* Wyświetlanie adresu jeśli jest */}
-                                    {restaurant.address && (
+                                    {restaurant.street && (
                                         <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                            📍 {restaurant.address}
+                                            📍 {restaurant.street} {restaurant.number}, {restaurant.city}
                                         </p>
                                     )}
                                 </div>
                                 
-                                {/* Ocena */}
                                 <div className="flex flex-col items-end">
                                     <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
                                         {restaurant.rating} ⭐
@@ -149,9 +151,14 @@ const RestaurantsList = () => {
             {/* --- KOLUMNA PRAWA: MAPA --- */}
             <div className="hidden md:block flex-1 bg-gray-200 dark:bg-gray-900 relative border-l border-gray-300 dark:border-gray-700 p-6">
                 
-                {/* Kontener "Karty" mapy - to on tworzy efekt ramki i cienia */}
                 <div className="w-full h-full bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 relative">
-                    <Map restaurants={filteredRestaurants} />
+                    {/* 3. PRZEKAZANIE: Przekazujemy selectedRestaurant do Mapy */}
+                    <Map 
+                        restaurants={filteredRestaurants} 
+                        selectedRestaurant={selectedRestaurant}
+                        // Opcjonalnie: Jeśli klikniesz pinezkę na mapie, też zaznacz na liście
+                        onSelect={setSelectedRestaurant} 
+                    />
                 </div>
 
             </div>
