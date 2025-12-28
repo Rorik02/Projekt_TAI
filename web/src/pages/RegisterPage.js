@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, Link } from "react-router-dom";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
+  // Stan formularza
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -13,13 +13,13 @@ export default function RegisterPage() {
     prefix: "+48",
     password: "",
     confirm_password: "",
-    role: "Klient",
+    role: "user", // WAŻNE: Musi być 'user', żeby system to rozpoznał
     street: "",
     city: "",
     postal_code: "",
-    terms_accepted: true,
+    terms_accepted: true,         // Domyślnie zaakceptowane (wymagane)
     marketing_consent: false,
-    data_processing_consent: true,
+    data_processing_consent: true // Domyślnie zaakceptowane (wymagane)
   });
 
   const [emailValid, setEmailValid] = useState(null);
@@ -29,44 +29,42 @@ export default function RegisterPage() {
 
   // REGEX-y
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const passwordRegex =
-    /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{9,}$/;
+  // Regex: min 9 znaków, duża litera, cyfra, znak specjalny
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{9,}$/;
 
   function handleChange(e) {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  // najpierw aktualizujemy stan lokalnie (nie w React!)
-  const updatedForm = { ...form, [name]: value };
+    // Aktualizujemy stan lokalnie do weryfikacji
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
 
-  setForm(updatedForm);
+    // Walidacja w czasie rzeczywistym
+    if (name === "email") {
+      setEmailValid(emailRegex.test(value));
+    }
 
-  // EMAIL
-  if (name === "email") {
-    setEmailValid(emailRegex.test(value));
-  }
+    if (name === "phone_number") {
+      setPhoneValid(value.length >= 9); // Zmienione na >= 9 dla bezpieczeństwa
+    }
 
-  // TELEFON
-  if (name === "phone_number") {
-    setPhoneValid(value.length === 9);
-  }
+    if (name === "password" || name === "confirm_password") {
+      const pass = updatedForm.password;
+      const confirm = updatedForm.confirm_password;
 
-  // HASŁO – zawsze sprawdzamy na podstawie updatedForm
-  if (name === "password" || name === "confirm_password") {
-    const pass = updatedForm.password;
-    const confirm = updatedForm.confirm_password;
-
-    if (!passwordRegex.test(pass)) {
-      setPasswordError("Hasło nie spełnia wymagań.");
-    } else if (confirm && pass !== confirm) {
-      setPasswordError("Hasła nie są takie same.");
-    } else {
-      setPasswordError(null);
+      if (!passwordRegex.test(pass)) {
+        setPasswordError("Hasło: min. 9 znaków, 1 duża litera, 1 cyfra, 1 znak specjalny.");
+      } else if (confirm && pass !== confirm) {
+        setPasswordError("Hasła nie są takie same.");
+      } else {
+        setPasswordError(null);
+      }
     }
   }
-}
 
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log(">>> Rozpoczynam wysyłanie formularza..."); // DIAGNOSTYKA
 
     if (!emailValid) {
       setResponseMessage("Niepoprawny adres email.");
@@ -85,139 +83,141 @@ export default function RegisterPage() {
 
     const payload = {
       ...form,
-      phone_number: `${form.prefix}${form.phone_number}`,
+      // Backend oczekuje roli "user", a nie "Klient" (chyba że zmieniłeś to w Pythonie)
+      role: "user", 
+      phone_number: `${form.prefix} ${form.phone_number}`,
     };
 
+    console.log(">>> Wysyłam dane:", payload); // Zobaczysz w konsoli co leci do bazy
+
     try {
+      // POPRAWIONY ADRES URL (bez słowa "register" na końcu)
       const res = await fetch("http://127.0.0.1:8000/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      console.log(">>> Status odpowiedzi:", res.status); // Zobaczysz czy to 200, 404 czy 500
+
       if (!res.ok) {
         const err = await res.json();
-        if (err.detail === "Konto o podanym email już istnieje") {
-          setResponseMessage("Konto o podanym email już istnieje");
+        console.error(">>> Błąd z backendu:", err);
+        
+        if (err.detail) {
+           // Czasami detail to string, czasami lista błędów
+           if (typeof err.detail === 'string') {
+               setResponseMessage(err.detail);
+           } else {
+               setResponseMessage("Błąd walidacji danych (sprawdź konsolę).");
+           }
         } else {
           setResponseMessage("Nie udało się utworzyć konta.");
         }
         return;
       }
 
+      // SUKCES
+      console.log(">>> Sukces! Przekierowuję...");
       setResponseMessage(null);
-      navigate("/restaurants");
+      alert("Konto utworzone pomyślnie!"); // Dodatkowy alert dla pewności
+      navigate("/login"); // Przekierowanie do logowania (zamiast restaurants)
 
     } catch (error) {
-      setResponseMessage("Błąd połączenia z serwerem.");
+      console.error(">>> Błąd sieci:", error);
+      setResponseMessage("Błąd połączenia z serwerem. Sprawdź czy backend działa.");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-6 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white px-4 py-10">
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg"
+        className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg border border-gray-700"
       >
         <h1 className="text-3xl font-bold mb-6 text-center">Rejestracja</h1>
 
-        <div className="grid gap-4">
+        <div className="space-y-4">
 
-          <input
-            className="p-3 rounded bg-gray-700"
-            type="text"
-            name="first_name"
-            placeholder="Imię"
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            className="p-3 rounded bg-gray-700"
-            type="text"
-            name="last_name"
-            placeholder="Nazwisko"
-            onChange={handleChange}
-            required
-          />
+          <div className="grid grid-cols-2 gap-4">
+              <input
+                className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                type="text"
+                name="first_name"
+                placeholder="Imię"
+                onChange={handleChange}
+                required
+              />
+              <input
+                className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                type="text"
+                name="last_name"
+                placeholder="Nazwisko"
+                onChange={handleChange}
+                required
+              />
+          </div>
 
           {/* EMAIL */}
           <div>
             <input
-              className="p-3 rounded bg-gray-700 w-full"
+              className={`p-3 rounded bg-gray-700 border w-full outline-none ${
+                emailValid === false ? "border-red-500" : "border-gray-600 focus:border-purple-500"
+              }`}
               type="email"
               name="email"
               placeholder="Email"
               onChange={handleChange}
               required
             />
-            {emailValid === false && (
-              <p className="text-red-400 text-sm mt-1">Niepoprawny adres email.</p>
-            )}
-            {emailValid === true && (
-              <p className="text-green-400 text-sm mt-1">Email poprawny.</p>
-            )}
           </div>
 
-          {/* TELEFON + PREFIX */}
+          {/* TELEFON */}
           <div className="flex gap-2">
             <select
               name="prefix"
-              className="p-3 rounded bg-gray-700 w-24"
+              className="p-3 rounded bg-gray-700 border border-gray-600 outline-none"
               onChange={handleChange}
+              value={form.prefix}
             >
-              <option value="+48">+48 PL</option>
-              <option value="+49">+49 GER</option>
-              <option value="+44">+44 UK</option>
-              <option value="+1">+1 USA</option>
+              <option value="+48">+48</option>
+              <option value="+49">+49</option>
+              <option value="+44">+44</option>
+              <option value="+1">+1</option>
             </select>
 
-            <div className="w-full">
-              <input
-                className="p-3 rounded bg-gray-700 w-full"
-                type="text"
-                name="phone_number"
-                placeholder="Numer telefonu"
-                onChange={handleChange}
-                required
-              />
-              {phoneValid === false && (
-                <p className="text-red-400 text-sm mt-1">Numer telefonu musi mieć 9 cyfr.</p>
-              )}
-              {phoneValid === true && (
-                <p className="text-green-400 text-sm mt-1">Numer poprawny.</p>
-              )}
-            </div>
+            <input
+              className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+              type="text"
+              name="phone_number"
+              placeholder="Numer telefonu"
+              onChange={handleChange}
+              required
+            />
           </div>
 
           {/* HASŁO */}
           <div className="relative">
             <input
-              className="p-3 rounded bg-gray-700 w-full"
+              className={`p-3 rounded bg-gray-700 border w-full outline-none ${
+                passwordError ? "border-red-500" : "border-gray-600 focus:border-purple-500"
+              }`}
               type="password"
               name="password"
               placeholder="Hasło"
               onChange={handleChange}
               required
             />
-
-            {/* TOOLTIP */}
-            <div className="absolute right-2 top-3 group cursor-pointer">
-              <span className="bg-gray-600 px-2 py-1 rounded text-sm font-bold">i</span>
-              <div className="hidden group-hover:block absolute right-0 mt-2 w-64 bg-gray-700 text-white p-2 rounded shadow-lg text-sm">
-                <ul className="list-disc ml-4">
-                  <li>Min. 9 znaków</li>
-                  <li>Jedna duża litera</li>
-                  <li>Jedna cyfra</li>
-                  <li>Jeden znak specjalny</li>
-                </ul>
-              </div>
-            </div>
+             {/* Tooltip informacyjny */}
+             <div className="text-xs text-gray-400 mt-1 ml-1">
+                Wymagane: 9 znaków, Duża litera, cyfra, znak specjalny.
+             </div>
           </div>
 
-          {/* POTWIERDZENIE HASŁA */}
           <input
-            className="p-3 rounded bg-gray-700"
+            className={`p-3 rounded bg-gray-700 border w-full outline-none ${
+                passwordError ? "border-red-500" : "border-gray-600 focus:border-purple-500"
+            }`}
             type="password"
             name="confirm_password"
             placeholder="Potwierdź hasło"
@@ -225,59 +225,65 @@ export default function RegisterPage() {
             required
           />
 
-          {/* BŁĄD HASEŁ */}
           {passwordError && (
-            <p className="text-red-400 text-sm -mt-2">{passwordError}</p>
+            <p className="text-red-400 text-sm font-bold text-center">{passwordError}</p>
           )}
 
+          {/* ADRES */}
           <input
-            className="p-3 rounded bg-gray-700"
+            className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
             type="text"
             name="street"
-            placeholder="Ulica"
+            placeholder="Ulica i numer"
             onChange={handleChange}
             required
           />
-
-          <input
-            className="p-3 rounded bg-gray-700"
-            type="text"
-            name="city"
-            placeholder="Miasto"
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            className="p-3 rounded bg-gray-700"
-            type="text"
-            name="postal_code"
-            placeholder="Kod pocztowy"
-            onChange={handleChange}
-            required
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <input
+                className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                type="text"
+                name="city"
+                placeholder="Miasto"
+                onChange={handleChange}
+                required
+            />
+            <input
+                className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                type="text"
+                name="postal_code"
+                placeholder="Kod pocztowy"
+                onChange={handleChange}
+                required
+            />
+          </div>
         </div>
 
+        {/* PRZYCISK SUBMIT */}
         <button
           type="submit"
-          className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold shadow"
+          className="mt-6 w-full bg-purple-600 hover:bg-purple-700 transition text-white py-3 rounded-lg font-bold shadow-lg"
         >
           Utwórz konto
         </button>
 
+        {/* KOMUNIKATY ZWROTNE */}
         {responseMessage && (
-          <p className="text-center mt-4 text-red-400 font-semibold">
-            {responseMessage}
-          </p>
+          <div className="mt-4 p-3 bg-gray-700 rounded text-center border border-gray-600">
+             <p className="text-red-300 font-semibold">{responseMessage}</p>
+          </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg"
-        >
-          Powrót
-        </button>
+        {/* POWRÓT */}
+        <div className="mt-4 text-center">
+            <Link to="/" className="text-gray-400 hover:text-white text-sm">
+                Powrót do strony głównej
+            </Link>
+        </div>
+        <div className="mt-2 text-center">
+             <Link to="/login" className="text-purple-400 hover:text-purple-300 text-sm font-semibold">
+                 Masz już konto? Zaloguj się
+             </Link>
+        </div>
       </form>
     </div>
   );

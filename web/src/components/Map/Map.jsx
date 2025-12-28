@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Upewnij się, że masz tu SWÓJ DŁUGI token
 const MAPBOX_TOKEN = "pk.eyJ1Ijoicm9yaWsiLCJhIjoiY21qN3JvaDh5MDV4cDNncXpkM3RlNmVzZCJ9.HemoDNLmVXXnG2OTEb3H7g";
 
-const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect }) => {
+const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect, onShowMenu }) => {
     const [popupInfo, setPopupInfo] = useState(null);
 
     // Stan widoku mapy
@@ -89,21 +89,22 @@ const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect }) => {
                         offset={25}
                     >
                         <div className="p-2 text-center min-w-[160px]">
-                            <h3 className="font-bold text-lg text-black mb-1">
+                            <h3 className="font-bold text-lg text-gray-800 mb-1">
                                 {popupInfo.name}
                             </h3>
-                            <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">
+                            <p className="text-xs text-gray-500 mb-2 uppercase font-semibold">
                                 {popupInfo.cuisines}
                             </p>
                             <p className="text-xs text-gray-400 mb-3">
                                 {popupInfo.street} {popupInfo.number}, {popupInfo.city}
                             </p>
                             
+                            {/* --- ZAKTUALIZOWANY PRZYCISK --- */}
                             <button 
-                                onClick={() => onSelect(popupInfo)}
-                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-1.5 px-4 rounded-full transition-colors w-full"
+                                onClick={() => onShowMenu(popupInfo)} // <--- TU ZMIANA
+                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-full transition-colors w-full shadow-md"
                             >
-                                Pokaż Menu 🍽️
+                                Zobacz Menu 🍽️
                             </button>
                         </div>
                     </Popup>

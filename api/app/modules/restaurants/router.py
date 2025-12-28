@@ -97,6 +97,7 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
     db_product = models.Product(
         name=product.name,
         price=product.price,
+        category=product.category,
         restaurant_id=product.restaurant_id
     )
     db.add(db_product)

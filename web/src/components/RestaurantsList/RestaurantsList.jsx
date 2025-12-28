@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Map from '../Map/Map';
+import MenuModal from '../MenuModal/MenuModal';
 
 const CATEGORIES = [
   "Wszystkie", "Italian", "Japanese", "American", "Chinese", "Mexican",
@@ -9,11 +10,14 @@ const CATEGORIES = [
 const RestaurantsList = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // 1. NOWY STAN: Przechowuje klikniętą restaurację
     const [selectedRestaurant, setSelectedRestaurant] = useState(null);
     
-    // --- STANY FILTRÓW ---
+    // --- STANY MENU (Nowość) ---
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [menuProducts, setMenuProducts] = useState([]);
+    const [menuRestaurant, setMenuRestaurant] = useState(null);
+
+    // --- STANY FILTRÓW (Twoje) ---
     const [minRating, setMinRating] = useState(0);
     const [selectedCuisine, setSelectedCuisine] = useState("Wszystkie");
 
@@ -35,36 +39,56 @@ const RestaurantsList = () => {
         }
     };
 
-    // --- LOGIKA FILTROWANIA ---
+    // --- FUNKCJA OTWIERAJĄCA MENU (Logika backendu) ---
+    const handleOpenMenu = async (restaurant) => {
+        setMenuRestaurant(restaurant);
+        setMenuProducts([]); 
+        setIsMenuOpen(true); 
+
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurant.id}/products`);
+            if (res.ok) {
+                const products = await res.json();
+                setMenuProducts(products);
+            }
+        } catch (err) {
+            console.error("Błąd menu:", err);
+        }
+    };
+
     const filteredRestaurants = restaurants.filter(restaurant => {
         if (restaurant.rating < minRating) return false;
-        
         if (selectedCuisine !== "Wszystkie") {
             const cuisinesData = Array.isArray(restaurant.cuisines) 
                 ? restaurant.cuisines.join(" ") 
                 : restaurant.cuisines || "";
-            
-            if (!cuisinesData.toLowerCase().includes(selectedCuisine.toLowerCase())) {
-                return false;
-            }
+            if (!cuisinesData.toLowerCase().includes(selectedCuisine.toLowerCase())) return false;
         }
         return true;
     });
 
     return (
-        <div className="flex h-[calc(100vh-80px)] overflow-hidden">
+        <div className="flex h-[calc(100vh-80px)] overflow-hidden relative">
             
+            {/* MODAL (Okno z menu) */}
+            <MenuModal 
+                isOpen={isMenuOpen} 
+                onClose={() => setIsMenuOpen(false)}
+                restaurant={menuRestaurant}
+                products={menuProducts}
+            />
+
             {/* --- KOLUMNA LEWA: LISTA --- */}
             <div className="w-full md:w-2/5 lg:w-1/3 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                 
-                {/* NAGŁÓWEK Z FILTRAMI */}
+                {/* NAGŁÓWEK Z FILTRAMI (Przywrócony Twój styl) */}
                 <div className="p-4 bg-white dark:bg-gray-800 shadow-sm z-10">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                         Odkryj Restauracje ({filteredRestaurants.length})
                     </h2>
                     
                     <div className="flex flex-col gap-3">
-                        {/* Filtr Kuchni */}
+                        {/* Filtr Kuchni - Twój oryginalny styl */}
                         <div>
                             <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Rodzaj Kuchni</label>
                             <select 
@@ -78,7 +102,7 @@ const RestaurantsList = () => {
                             </select>
                         </div>
 
-                        {/* Filtr Oceny */}
+                        {/* Filtr Oceny - Twój oryginalny styl */}
                         <div>
                             <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Minimalna ocena</label>
                             <select 
@@ -113,35 +137,45 @@ const RestaurantsList = () => {
                         filteredRestaurants.map((restaurant) => (
                             <div 
                                 key={restaurant.id} 
-                                // 2. KLIKNIĘCIE: Ustawiamy wybraną restaurację
                                 onClick={() => setSelectedRestaurant(restaurant)}
-                                // Dodajemy warunkowy styl (border), żebyś wiedział co kliknąłeś
-                                className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer flex justify-between items-start group border ${
+                                className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer flex flex-col group border ${
                                     selectedRestaurant?.id === restaurant.id 
-                                    ? "border-purple-500 ring-1 ring-purple-500" // Aktywny
-                                    : "border-gray-100 dark:border-gray-700" // Nieaktywny
+                                    ? "border-purple-500 ring-1 ring-purple-500" 
+                                    : "border-gray-100 dark:border-gray-700"
                                 }`}
                             >
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
-                                        {restaurant.name}
-                                    </h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
-                                    </p>
-                                    
-                                    {restaurant.street && (
-                                        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                            📍 {restaurant.street} {restaurant.number}, {restaurant.city}
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
+                                            {restaurant.name}
+                                        </h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
                                         </p>
-                                    )}
+                                        
+                                        {restaurant.street && (
+                                            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                                📍 {restaurant.street} {restaurant.number}, {restaurant.city}
+                                            </p>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-end">
+                                        <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
+                                            {restaurant.rating} ⭐
+                                        </span>
+                                    </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end">
-                                    <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1">
-                                        {restaurant.rating} ⭐
-                                    </span>
-                                </div>
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenMenu(restaurant);
+                                    }}
+                                    className="mt-3 w-full bg-gray-100 hover:bg-purple-600 hover:text-white text-gray-600 py-2 rounded-lg text-sm font-semibold transition"
+                                >
+                                    Zobacz Menu
+                                </button>
                             </div>
                         ))
                     )}
@@ -150,17 +184,14 @@ const RestaurantsList = () => {
 
             {/* --- KOLUMNA PRAWA: MAPA --- */}
             <div className="hidden md:block flex-1 bg-gray-200 dark:bg-gray-900 relative border-l border-gray-300 dark:border-gray-700 p-6">
-                
                 <div className="w-full h-full bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 relative">
-                    {/* 3. PRZEKAZANIE: Przekazujemy selectedRestaurant do Mapy */}
                     <Map 
                         restaurants={filteredRestaurants} 
                         selectedRestaurant={selectedRestaurant}
-                        // Opcjonalnie: Jeśli klikniesz pinezkę na mapie, też zaznacz na liście
-                        onSelect={setSelectedRestaurant} 
+                        onSelect={setSelectedRestaurant}
+                        onShowMenu={handleOpenMenu} // Przekazujemy funkcję do Mapy
                     />
                 </div>
-
             </div>
 
         </div>

@@ -14,7 +14,10 @@ const Navbar = () => {
   // SPRAWDZANIE ROLI (Ulepszone)
   // Zamieniamy na małe litery i usuwamy spacje, żeby mieć pewność
   const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
+  
+  // Sprawdzamy konkretne uprawnienia
   const isOwner = normalizedRole === "właściciel" || normalizedRole === "owner";
+  const isAdmin = normalizedRole === "admin"; // <--- NOWE: Sprawdzanie admina
 
   const handleLogout = () => {
     localStorage.clear();
@@ -50,13 +53,23 @@ const Navbar = () => {
               Kuchnie
             </Link>
             
-            {/* OPCJA DLA WŁAŚCICIELA (Widoczna na głównym pasku) */}
+            {/* OPCJA DLA WŁAŚCICIELA */}
             {isLoggedIn && isOwner && (
                 <Link 
                   to="/dashboard" 
                   className="bg-purple-700 hover:bg-purple-500 text-white px-3 py-2 rounded-md font-medium transition shadow-sm border border-purple-500"
                 >
                   Moje Restauracje
+                </Link>
+            )}
+
+            {/* NOWE: OPCJA DLA ADMINISTRATORA */}
+            {isLoggedIn && isAdmin && (
+                <Link 
+                  to="/admin" 
+                  className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition shadow-sm border border-red-400 animate-pulse"
+                >
+                  Administacja
                 </Link>
             )}
 

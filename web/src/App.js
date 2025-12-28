@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
 
 // --- Twoje strony ---
@@ -7,11 +7,27 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AppPage from "./pages/AppPage";
 import RestaurantsHome from "./pages/RestaurantsHome";
-
-import OwnerDashboard from "./pages/OwnerDashboard";
-import OwnerLogin from "./pages/OwnerLogin";
 import CuisinesPage from "./pages/CuisinesPage";
 import ContactPage from "./pages/ContactPage";
+import AdminUsers from "./pages/AdminUsers";
+
+// --- Panele ---
+import OwnerDashboard from "./pages/OwnerDashboard";
+// Upewnij się, że ten plik istnieje w folderze pages (kod wysłałem w poprzedniej wiadomości)
+import AdminDashboard from "./pages/AdminDashboard"; 
+
+// --- OCHRONIARZ (Komponent zabezpieczający) ---
+// Sprawdza, czy użytkownik ma rolę "admin". Jeśli nie -> wyrzuca na stronę główną.
+const AdminGuard = ({ children }) => {
+  const userRole = localStorage.getItem("user_role");
+  const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
+
+  if (normalizedRole === "admin") {
+    return children;
+  } else {
+    return <Navigate to="/" replace />;
+  }
+};
 
 export default function App() {
   return (
@@ -24,13 +40,38 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Dodajemy Navbar tylko do tych stron, używając Fragmentu <> */}
+          {/* Strony z Navbarem */}
           <Route path="/restaurants" element={<><Navbar /><RestaurantsHome /></>} />
           <Route path="/cuisines" element={<><Navbar /><CuisinesPage /></>} />
           <Route path="/contact" element={<><Navbar /><ContactPage /></>} />
           
           {/* --- Panel Właściciela --- */}
           <Route path="/dashboard" element={<><Navbar /><OwnerDashboard/></>} />
+          
+          {/* --- PANEL ADMINISTRATORA (ZABEZPIECZONY) --- */}
+          <Route 
+            path="/admin" 
+            element={
+              <AdminGuard>
+                <>
+                  <Navbar />
+                  <AdminDashboard />
+                </>
+              </AdminGuard>
+            } 
+          />
+          {/* --- NOWA TRASA: LISTA UŻYTKOWNIKÓW --- */}
+          <Route 
+            path="/admin/users" 
+            element={
+              <AdminGuard>
+                <>
+                  <Navbar />
+                  <AdminUsers />
+                </>
+              </AdminGuard>
+            } 
+          />
           
           {/* Placeholder */}
           <Route path="/app" element={<AppPage />} />

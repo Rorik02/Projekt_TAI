@@ -10,13 +10,9 @@ class Restaurant(Base):
     name = Column(String, index=True)
     rating = Column(Float, default=0.0)
     cuisines = Column(String) # Będziemy tu trzymać listę po przecinku np. "Pizza,Pasta"
-
-    # Nowe pola adresowe
     city = Column(String, default="")
     street = Column(String, default="")
     number = Column(String, default="")
-
-    # Pola geolokalizacji (uzupełniane automatycznie)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
@@ -30,5 +26,6 @@ class Product(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     name = Column(String)
     price = Column(Float)
+    category = Column(String)
 
     restaurant = relationship("Restaurant", back_populates="products")

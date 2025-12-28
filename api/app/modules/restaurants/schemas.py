@@ -6,6 +6,7 @@ from typing import List, Optional
 class ProductBase(BaseModel):
     name: str
     price: float
+    category: str
 
 class ProductCreate(ProductBase):
     restaurant_id: int
@@ -15,6 +16,13 @@ class ProductOut(ProductBase):
     restaurant_id: int
     class Config:
         from_attributes = True
+
+class Product(ProductBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+
 
 # --- Restauracje ---
 class RestaurantBase(BaseModel):
