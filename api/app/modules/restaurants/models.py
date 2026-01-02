@@ -1,7 +1,6 @@
-# api/app/modules/restaurants/models.py
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.database import Base # Import Twojej bazy
+from app.db.database import Base 
 
 class Restaurant(Base):
     __tablename__ = "restaurants"
@@ -9,15 +8,24 @@ class Restaurant(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     rating = Column(Float, default=0.0)
-    cuisines = Column(String) # Będziemy tu trzymać listę po przecinku np. "Pizza,Pasta"
+    cuisines = Column(String) 
     city = Column(String, default="")
     street = Column(String, default="")
     number = Column(String, default="")
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
-    # Relacja z produktami
-    products = relationship("Product", back_populates="restaurant")
+    # Status: 'pending', 'approved', 'rejected'
+    status = Column(String, default="pending") 
+    
+    # --- NOWE POLE: POWÓD ODRZUCENIA ---
+    rejection_reason = Column(String, nullable=True)
+
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    products = relationship("Product", back_populates="restaurant", cascade="all, delete-orphan")
+    owner = relationship("app.modules.users.models.User", back_populates="restaurants")
+
 
 class Product(Base):
     __tablename__ = "products"

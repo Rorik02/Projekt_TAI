@@ -9,12 +9,13 @@ import AppPage from "./pages/AppPage";
 import RestaurantsHome from "./pages/RestaurantsHome";
 import CuisinesPage from "./pages/CuisinesPage";
 import ContactPage from "./pages/ContactPage";
-import AdminUsers from "./pages/AdminUsers";
 
 // --- Panele ---
 import OwnerDashboard from "./pages/OwnerDashboard";
-// Upewnij się, że ten plik istnieje w folderze pages (kod wysłałem w poprzedniej wiadomości)
 import AdminDashboard from "./pages/AdminDashboard"; 
+import AdminUsers from "./pages/AdminUsers";
+import AdminApplications from "./pages/AdminApplications";
+import AdminRestaurants from "./pages/AdminRestaurants"; // <--- NOWY IMPORT
 
 // --- OCHRONIARZ (Komponent zabezpieczający) ---
 // Sprawdza, czy użytkownik ma rolę "admin". Jeśli nie -> wyrzuca na stronę główną.
@@ -49,6 +50,8 @@ export default function App() {
           <Route path="/dashboard" element={<><Navbar /><OwnerDashboard/></>} />
           
           {/* --- PANEL ADMINISTRATORA (ZABEZPIECZONY) --- */}
+          
+          {/* 1. GŁÓWNY DASHBOARD (Kafelki) */}
           <Route 
             path="/admin" 
             element={
@@ -60,7 +63,8 @@ export default function App() {
               </AdminGuard>
             } 
           />
-          {/* --- NOWA TRASA: LISTA UŻYTKOWNIKÓW --- */}
+
+          {/* 2. ZARZĄDZANIE UŻYTKOWNIKAMI */}
           <Route 
             path="/admin/users" 
             element={
@@ -68,6 +72,32 @@ export default function App() {
                 <>
                   <Navbar />
                   <AdminUsers />
+                </>
+              </AdminGuard>
+            } 
+          />
+
+          {/* 3. WNIOSKI O RESTAURACJE */}
+          <Route 
+            path="/admin/applications" 
+            element={
+              <AdminGuard>
+                <>
+                  <Navbar />
+                  <AdminApplications />
+                </>
+              </AdminGuard>
+            } 
+          />
+
+          {/* 4. ZARZĄDZANIE RESTAURACJAMI (Nowa trasa) */}
+          <Route 
+            path="/admin/restaurants" 
+            element={
+              <AdminGuard>
+                <>
+                  <Navbar />
+                  <AdminRestaurants />
                 </>
               </AdminGuard>
             } 

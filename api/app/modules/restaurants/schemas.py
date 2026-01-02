@@ -1,4 +1,3 @@
-# api/app/modules/restaurants/schemas.py
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -20,32 +19,53 @@ class ProductOut(ProductBase):
 class Product(ProductBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-
+# --- Pomocniczy schemat właściciela ---
+class OwnerInfo(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    class Config:
+        from_attributes = True
 
 # --- Restauracje ---
 class RestaurantBase(BaseModel):
     name: str
     cuisines: str
-    
-    # Pola adresowe
     city: str
     street: str
     number: str
 
 class RestaurantCreate(RestaurantBase):
-    # Dodajemy pole rating, aby router mógł je odczytać (domyślnie 0.0)
     rating: Optional[float] = 0.0
+
+# --- EDYCJA DANYCH RESTAURACJI (Brakujący element) ---
+class RestaurantUpdate(BaseModel):
+    name: Optional[str] = None
+    cuisines: Optional[str] = None
+    city: Optional[str] = None
+    street: Optional[str] = None
+    number: Optional[str] = None
+    rating: Optional[float] = None
+
+# --- AKTUALIZACJA STATUSU ---
+class RestaurantStatusUpdate(BaseModel):
+    status: str
+    rejection_reason: Optional[str] = None
 
 class RestaurantOut(RestaurantBase):
     id: int
     rating: float
-    
-    # Pola geolokalizacji
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     
+    status: str
+    rejection_reason: Optional[str] = None
+    
+    owner_id: Optional[int] = None
+    owner: Optional[OwnerInfo] = None 
+
     products: List[ProductOut] = []
 
     class Config:

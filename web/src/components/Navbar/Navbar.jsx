@@ -1,119 +1,117 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  
-  // Pobieramy dane
-  const userName = localStorage.getItem("user_name");
-  const userLastName = localStorage.getItem("user_last_name");
-  const userRole = localStorage.getItem("user_role"); // Pobieramy surową rolę z bazy
-  
-  const isLoggedIn = !!userName;
+  const token = localStorage.getItem("access_token");
+  const [user, setUser] = useState(null);
 
-  // SPRAWDZANIE ROLI (Ulepszone)
-  // Zamieniamy na małe litery i usuwamy spacje, żeby mieć pewność
-  const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
-  
-  // Sprawdzamy konkretne uprawnienia
-  const isOwner = normalizedRole === "właściciel" || normalizedRole === "owner";
-  const isAdmin = normalizedRole === "admin"; // <--- NOWE: Sprawdzanie admina
-
+  // Funkcja wylogowania
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
-    window.location.reload();
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
+    navigate("/login");
   };
 
-  const getInitials = (name, lastName) => {
-    const firstInitial = name ? name.charAt(0) : "";
-    const lastInitial = lastName ? lastName.charAt(0) : "";
-    return (firstInitial + lastInitial).toUpperCase();
-  };
+  // POBIERANIE DANYCH UŻYTKOWNIKA - TO JEST KLUCZOWE
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!token) return;
+      try {
+        const response = await fetch("http://127.0.0.1:8000/users/me", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+          // Opcjonalnie: aktualizuj rolę w localStorage dla pewności
+          if (data.role) localStorage.setItem("user_role", data.role);
+        } else {
+          // Jeśli token jest nieważny -> wyloguj
+          handleLogout();
+        }
+      } catch (error) {
+        console.error("Błąd pobierania danych usera", error);
+      }
+    };
+
+    fetchUser();
+  }, [token]);
 
   return (
-    <div className="bg-purple-600 dark:bg-purple-900 text-white shadow-md transition-colors duration-200">
+    <nav className="bg-purple-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           
-          {/* Logo */}
+          {/* LEWA STRONA: LOGO + LINKI */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-               <div className="w-8 h-8 bg-white text-purple-600 rounded-full flex items-center justify-center font-bold text-xl group-hover:rotate-12 transition">F</div>
-               <span className="text-2xl font-bold tracking-wider hover:text-gray-200 transition">FoodAPP</span>
+            <Link to="/" className="flex-shrink-0 font-bold text-2xl tracking-wider">
+              FoodAPP 🍔
             </Link>
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                <Link to="/restaurants" className="hover:bg-purple-700 px-3 py-2 rounded-md text-sm font-medium transition">
+                  Restauracje
+                </Link>
+                <Link to="/cuisines" className="hover:bg-purple-700 px-3 py-2 rounded-md text-sm font-medium transition">
+                  Kuchnie
+                </Link>
+                
+                {/* Link widoczny TYLKO dla Admina */}
+                {user && user.role === 'admin' && (
+                  <Link to="/admin" className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-md text-sm font-medium transition shadow">
+                    Administracja
+                  </Link>
+                )}
+                
+                {/* Link widoczny TYLKO dla Właściciela */}
+                {user && user.role === 'właściciel' && (
+                   <Link to="/dashboard" className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition shadow">
+                   Panel Właściciela
+                 </Link>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Linki Główne */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/restaurants" className="hover:text-purple-200 font-medium transition">
-              Restauracje
-            </Link>
-            <Link to="/cuisines" className="hover:text-purple-200 font-medium transition">
-              Kuchnie
-            </Link>
-            
-            {/* OPCJA DLA WŁAŚCICIELA */}
-            {isLoggedIn && isOwner && (
-                <Link 
-                  to="/dashboard" 
-                  className="bg-purple-700 hover:bg-purple-500 text-white px-3 py-2 rounded-md font-medium transition shadow-sm border border-purple-500"
-                >
-                  Moje Restauracje
-                </Link>
-            )}
-
-            {/* NOWE: OPCJA DLA ADMINISTRATORA */}
-            {isLoggedIn && isAdmin && (
-                <Link 
-                  to="/admin" 
-                  className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition shadow-sm border border-red-400 animate-pulse"
-                >
-                  Administacja
-                </Link>
-            )}
-
-            {/* SEKCJA UŻYTKOWNIKA (Prawa strona) */}
-            {isLoggedIn ? (
-              <div className="flex items-center gap-4 ml-4 pl-6 border-l border-purple-400">
-                
-                {/* Avatar (Inicjały) */}
-                <div className="relative group cursor-default">
-                  <div className="w-12 h-12 rounded-full bg-white text-purple-700 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-purple-300">
-                    {getInitials(userName, userLastName)}
+          {/* PRAWA STRONA: PROFIL + WYLOGUJ */}
+          <div className="hidden md:block">
+            <div className="ml-4 flex items-center md:ml-6">
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col text-right mr-2">
+                    <span className="text-sm font-bold uppercase tracking-wide">
+                      {user.first_name || "Admin"} {user.last_name}
+                    </span>
+                    <button 
+                        onClick={handleLogout} 
+                        className="text-xs text-purple-200 hover:text-white text-right font-medium"
+                    >
+                        Wyloguj
+                    </button>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-white text-purple-800 flex items-center justify-center font-bold text-lg border-2 border-purple-300">
+                    {user.first_name ? user.first_name[0].toUpperCase() : "A"}
+                    {user.last_name ? user.last_name[0].toUpperCase() : ""}
                   </div>
                 </div>
-
-                {/* Tekst: Rola + Wyloguj */}
-                <div className="flex flex-col justify-center">
-                  <span className="text-xs uppercase tracking-widest text-purple-200 font-semibold mb-1">
-                    {userRole || "Użytkownik"}
-                  </span>
-                  
-                  <button 
-                    onClick={handleLogout}
-                    className="text-sm text-left font-bold text-white hover:text-red-200 transition flex items-center gap-1"
-                  >
-                    Wyloguj
-                  </button>
+              ) : (
+                <div className="flex gap-2">
+                    <Link to="/login" className="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded text-sm font-bold transition">
+                        Zaloguj
+                    </Link>
+                    <Link to="/register" className="bg-white text-purple-800 hover:bg-gray-100 px-4 py-2 rounded text-sm font-bold transition">
+                        Rejestracja
+                    </Link>
                 </div>
-
-              </div>
-            ) : (
-              /* Stan wylogowany */
-              <div className="flex items-center gap-3 ml-4">
-                <Link to="/login" className="px-4 py-2 rounded-lg hover:bg-purple-500 transition border border-transparent hover:border-purple-300">
-                  Zaloguj
-                </Link>
-                <Link to="/register" className="px-4 py-2 bg-white text-purple-700 rounded-lg font-bold hover:bg-gray-100 transition shadow">
-                  Rejestracja
-                </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 

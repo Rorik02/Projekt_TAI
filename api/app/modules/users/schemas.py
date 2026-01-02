@@ -1,40 +1,40 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 
-class UserCreate(BaseModel):
+# --- SCHEMATY UŻYTKOWNIKA ---
+
+class UserBase(BaseModel):
+    email: str
+
+# To zostawiamy, żeby logowanie działało!
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserCreate(UserBase):
+    password: str
     first_name: str
     last_name: str
-    email: EmailStr
     phone_number: str
-    password: str
-    role: str
     street: str
     city: str
     postal_code: str
-
     terms_accepted: bool
     marketing_consent: bool
     data_processing_consent: bool
 
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserOut(BaseModel):
+class UserOut(UserBase):
     id: int
     first_name: str
     last_name: str
-    email: EmailStr
-    phone_number: str
     role: str
-    street: str
-    city: str
-    postal_code: str
-    terms_accepted: bool
-    marketing_consent: bool
-    data_processing_consent: bool
+    street: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
