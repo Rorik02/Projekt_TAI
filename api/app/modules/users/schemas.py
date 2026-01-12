@@ -1,12 +1,28 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
-# --- SCHEMATY UŻYTKOWNIKA ---
+# --- NOWOŚĆ: SCHEMATY ADRESÓW ---
+class UserAddressBase(BaseModel):
+    name: str
+    city: str
+    street: str
+    number: str
+
+class UserAddressCreate(UserAddressBase):
+    pass
+
+class UserAddressOut(UserAddressBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+# --- SCHEMATY UŻYTKOWNIKA (Bez zmian w logice) ---
 
 class UserBase(BaseModel):
     email: str
 
-# To zostawiamy, żeby logowanie działało!
 class UserLogin(BaseModel):
     email: str
     password: str
@@ -31,6 +47,9 @@ class UserOut(UserBase):
     street: Optional[str] = None
     city: Optional[str] = None
     postal_code: Optional[str] = None
+    
+    # NOWOŚĆ: Lista adresów
+    additional_addresses: List[UserAddressOut] = []
 
     class Config:
         from_attributes = True

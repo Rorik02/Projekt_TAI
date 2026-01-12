@@ -6,7 +6,7 @@ import HomePage from "./pages/HomePage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AppPage from "./pages/AppPage";
-import RestaurantsHome from "./pages/RestaurantsHome";
+// import RestaurantsHome from "./pages/RestaurantsHome"; // To jest stare, nie używamy
 import CuisinesPage from "./pages/CuisinesPage";
 import ContactPage from "./pages/ContactPage";
 
@@ -15,10 +15,10 @@ import OwnerDashboard from "./pages/OwnerDashboard";
 import AdminDashboard from "./pages/AdminDashboard"; 
 import AdminUsers from "./pages/AdminUsers";
 import AdminApplications from "./pages/AdminApplications";
-import AdminRestaurants from "./pages/AdminRestaurants"; // <--- NOWY IMPORT
+import AdminRestaurants from "./pages/AdminRestaurants";
+import RestaurantsPage from './pages/RestaurantsPage'; // <--- TWÓJ NOWY PLIK Z ADRESAMI
 
-// --- OCHRONIARZ (Komponent zabezpieczający) ---
-// Sprawdza, czy użytkownik ma rolę "admin". Jeśli nie -> wyrzuca na stronę główną.
+// --- OCHRONIARZ ---
 const AdminGuard = ({ children }) => {
   const userRole = localStorage.getItem("user_role");
   const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
@@ -36,22 +36,25 @@ export default function App() {
       <div className="App min-h-screen bg-white dark:bg-gray-900">
         
         <Routes>
-          {/* --- Ścieżki Publiczne  --- */}
-          <Route path="/" element={<HomePage />} />
+          {/* --- Ścieżki Publiczne --- */}
+          
+          {/* WAŻNA ZMIANA: Główna ścieżka prowadzi teraz do RestaurantsPage (z Navbarem) */}
+          <Route path="/" element={<><Navbar /><RestaurantsPage /></>} />
+          
+          {/* Ścieżka /restaurants też prowadzi do nowej strony */}
+          <Route path="/restaurants" element={<><Navbar /><RestaurantsPage /></>} />
+
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-
-          {/* Strony z Navbarem */}
-          <Route path="/restaurants" element={<><Navbar /><RestaurantsHome /></>} />
+          
+          {/* Pozostałe strony */}
           <Route path="/cuisines" element={<><Navbar /><CuisinesPage /></>} />
           <Route path="/contact" element={<><Navbar /><ContactPage /></>} />
           
           {/* --- Panel Właściciela --- */}
           <Route path="/dashboard" element={<><Navbar /><OwnerDashboard/></>} />
           
-          {/* --- PANEL ADMINISTRATORA (ZABEZPIECZONY) --- */}
-          
-          {/* 1. GŁÓWNY DASHBOARD (Kafelki) */}
+          {/* --- PANEL ADMINISTRATORA --- */}
           <Route 
             path="/admin" 
             element={
@@ -64,7 +67,6 @@ export default function App() {
             } 
           />
 
-          {/* 2. ZARZĄDZANIE UŻYTKOWNIKAMI */}
           <Route 
             path="/admin/users" 
             element={
@@ -77,7 +79,6 @@ export default function App() {
             } 
           />
 
-          {/* 3. WNIOSKI O RESTAURACJE */}
           <Route 
             path="/admin/applications" 
             element={
@@ -90,7 +91,6 @@ export default function App() {
             } 
           />
 
-          {/* 4. ZARZĄDZANIE RESTAURACJAMI (Nowa trasa) */}
           <Route 
             path="/admin/restaurants" 
             element={
@@ -103,7 +103,6 @@ export default function App() {
             } 
           />
           
-          {/* Placeholder */}
           <Route path="/app" element={<AppPage />} />
         </Routes>
       </div>
