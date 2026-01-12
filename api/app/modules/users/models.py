@@ -29,6 +29,9 @@ class User(Base):
     # NOWOŚĆ: Relacja do dodatkowych adresów
     additional_addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
 
+    #relacja z zamówieniami
+    orders = relationship("app.modules.orders.models.Order", back_populates="user")
+
 
 # NOWA TABELA
 class UserAddress(Base):

@@ -1,24 +1,25 @@
 import React from 'react';
+import { useCart } from '../../context/CartContext'; // <--- IMPORTUJEMY KONTEKST
 
 // Kolejność wyświetlania kategorii w menu klienta
 const CATEGORY_ORDER = ["Przystawka", "Zupa", "Danie główne", "Dodatek", "Deser", "Napój"];
 
 const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
+    // Używamy funkcji z koszyka
+    const { addToCart } = useCart();
+
     if (!isOpen) return null;
 
     // --- LOGIKA GRUPOWANIA PRODUKTÓW ---
-    // 1. Grupujemy produkty po kategorii
     const groupedProducts = products.reduce((acc, product) => {
-        const cat = product.category || "Inne"; // Jeśli brak kategorii, wrzuć do "Inne"
+        const cat = product.category || "Inne";
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(product);
         return acc;
     }, {});
 
-    // 2. Ustalamy kolejność wyświetlania kategorii
     const activeCategories = CATEGORY_ORDER.filter(cat => groupedProducts[cat]);
     
-    // Jeśli są kategorie spoza naszej listy (np. "Inne"), dodajemy je na końcu
     Object.keys(groupedProducts).forEach(cat => {
         if (!CATEGORY_ORDER.includes(cat)) {
             activeCategories.push(cat);
@@ -28,7 +29,10 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             
-            <div className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Kliknięcie w tło zamyka modal */}
+            <div className="absolute inset-0" onClick={onClose}></div>
+
+            <div className="relative bg-white dark:bg-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10">
                 
                 {/* Nagłówek Modala */}
                 <div className="p-6 bg-purple-600 text-white flex justify-between items-center shrink-0">
@@ -54,11 +58,10 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
                             <p>Menu tej restauracji jest jeszcze puste.</p>
                         </div>
                     ) : (
-                        // Mapujemy po kategoriach
                         activeCategories.map((category) => (
                             <div key={category} className="mb-8 last:mb-0">
                                 {/* Nagłówek Sekcji */}
-                                <h3 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2 border-gray-200 dark:border-gray-700 sticky top-0 bg-gray-50 dark:bg-gray-900 py-2">
+                                <h3 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2 border-gray-200 dark:border-gray-700 sticky top-0 bg-gray-50 dark:bg-gray-900 py-2 z-10">
                                     {category}
                                 </h3>
 
@@ -81,7 +84,7 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
                                                 </span>
                                                 
                                                 <button 
-                                                    onClick={() => alert(`Dodano do koszyka: ${item.name}`)}
+                                                    onClick={() => addToCart(item, restaurant)} // <--- TUTAJ DZIAŁA KOSZYK
                                                     className="bg-gray-100 dark:bg-gray-700 hover:bg-green-500 hover:text-white dark:hover:bg-green-600 text-gray-700 dark:text-gray-200 font-medium w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95"
                                                     title="Dodaj do koszyka"
                                                 >

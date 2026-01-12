@@ -26,6 +26,8 @@ class Restaurant(Base):
     products = relationship("Product", back_populates="restaurant", cascade="all, delete-orphan")
     owner = relationship("app.modules.users.models.User", back_populates="restaurants")
 
+    orders = relationship("app.modules.orders.models.Order", back_populates="restaurant")
+
 
 class Product(Base):
     __tablename__ = "products"
