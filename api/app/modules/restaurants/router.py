@@ -247,3 +247,21 @@ def delete_product(product_id: int, db: Session = Depends(get_db), current_user:
     db.delete(product)
     db.commit()
     return {"message": "Produkt usunięty"}
+
+
+# 10. PUBLICZNE: Lista dostępnych kuchni
+@router.get("/cuisines", response_model=List[str])
+def get_available_cuisines(db: Session = Depends(get_db)):
+    restaurants = db.query(models.Restaurant).filter(
+        models.Restaurant.status == "approved"
+    ).all()
+
+    cuisines_set = set()
+
+    for r in restaurants:
+        if r.cuisines:
+            # rozbijamy po przecinku
+            for c in r.cuisines.split(","):
+                cuisines_set.add(c.strip())
+
+    return sorted(list(cuisines_set))

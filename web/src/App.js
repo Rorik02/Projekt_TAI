@@ -24,6 +24,9 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminApplications from "./pages/AdminApplications";
 import AdminRestaurants from "./pages/AdminRestaurants";
 
+import Profile from "./pages/Profile";
+
+
 // --- OCHRONIARZ (GUARD) ---
 const AdminGuard = ({ children }) => {
   const userRole = localStorage.getItem("user_role");
@@ -58,6 +61,8 @@ export default function App() {
             <Route path="/" element={<RestaurantsPage />} />
             <Route path="/restaurants" element={<RestaurantsPage />} />
             
+            <Route path="/profile" element={<Profile />} />
+
             {/* Nowa strona historii zamówień */}
             <Route path="/orders" element={<OrdersPage />} />
 

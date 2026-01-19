@@ -5,10 +5,12 @@ const AdminApplications = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("access_token");
 
-  // Zakładki: 'new' (oczekujące) | 'history' (historia)
+  // Zakładki: 'new' (oczekujące) | 'history' (historia) 'owners' 
+
   const [activeTab, setActiveTab] = useState("new");
 
   const [applications, setApplications] = useState([]);
+  const [ownerRequests, setOwnerRequests] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +55,7 @@ const AdminApplications = () => {
 
   useEffect(() => {
     if (activeTab === "new") fetchNewApplications();
+    else if (activeTab === "owners") fetchOwnerRequests();
     else fetchHistory();
   }, [activeTab]);
 
@@ -107,6 +110,54 @@ const AdminApplications = () => {
     }
   };
 
+  const fetchOwnerRequests = async () => {
+  setLoading(true);
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:8000/users/owner-requests",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Błąd pobierania");
+    const data = await response.json();
+    setOwnerRequests(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const decideOwner = async (userId, approve) => {
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:8000/users/${userId}/owner-decision?approve=${approve}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error("Błąd decyzji");
+
+    setOwnerRequests(ownerRequests.filter(u => u.id !== userId));
+    alert(
+      approve
+        ? "Użytkownik został restauratorem"
+        : "Wniosek został odrzucony"
+    );
+  } catch (err) {
+    console.error(err);
+    alert("Błąd API");
+  }
+};
+
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-8 relative">
       <div className="max-w-7xl mx-auto">
@@ -127,7 +178,7 @@ const AdminApplications = () => {
                     activeTab === "new" ? "text-purple-400 border-b-2 border-purple-400" : "text-gray-400 hover:text-white"
                 }`}
             >
-                Nowe Wnioski
+                Restauracja Wnioski
             </button>
             <button 
                 onClick={() => setActiveTab("history")}
@@ -137,6 +188,17 @@ const AdminApplications = () => {
             >
                 Historia Decyzji
             </button>
+            <button 
+              onClick={() => setActiveTab("owners")}
+              className={`pb-3 px-4 text-lg font-medium transition-colors relative ${
+                activeTab === "owners"
+                  ? "text-purple-400 border-b-2 border-purple-400"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+                Restaurator wnioski
+            </button>
+
         </div>
 
         {/* --- TABELA: NOWE WNIOSKI --- */}
@@ -196,6 +258,60 @@ const AdminApplications = () => {
                 )}
             </div>
         )}
+
+        {activeTab === "owners" && (
+  <div className="bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-700">
+    {ownerRequests.length === 0 && !loading ? (
+      <div className="p-10 text-center text-gray-400">
+        Brak wniosków o restauratora
+      </div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-900/50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">ID</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Użytkownik</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase">Decyzja</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700">
+            {ownerRequests.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-700/50 transition">
+                <td className="px-6 py-4 text-gray-400 font-mono">
+                  #{user.id}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="font-bold text-white">
+                    {user.first_name} {user.last_name}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {user.email}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-right flex justify-end gap-3">
+                  <button
+                    onClick={() => decideOwner(user.id, false)}
+                    className="px-3 py-1 bg-red-900/20 text-red-400 border border-red-800 rounded hover:bg-red-900/50 font-bold"
+                  >
+                    Odrzuć
+                  </button>
+                  <button
+                    onClick={() => decideOwner(user.id, true)}
+                    className="px-3 py-1 bg-green-900/20 text-green-400 border border-green-800 rounded hover:bg-green-900/50 font-bold"
+                  >
+                    Zatwierdź
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+)}
+
 
         {/* --- TABELA: HISTORIA --- */}
         {activeTab === "history" && (

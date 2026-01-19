@@ -13,6 +13,8 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(String, default="user")
     
+    role_request = Column(String, nullable=True)  
+
     # Adres Główny
     street = Column(String)
     city = Column(String)
@@ -46,3 +48,5 @@ class UserAddress(Base):
     number = Column(String)
     
     user = relationship("User", back_populates="additional_addresses")
+
+

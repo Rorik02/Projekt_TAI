@@ -113,6 +113,14 @@ const Navbar = () => {
                           {user.first_name || "Witaj"} {user.last_name}
                         </span>
                         
+                        <Link
+                          to="/profile"
+                          className="text-xs text-purple-200 hover:text-white font-bold transition"
+                        >
+                          👤 Profil
+                        </Link>
+
+                        
                         {/* LINK DO HISTORII - WIDOCZNY TYLKO DLA ZWYKŁEGO USERA */}
                         {user.role === 'user' && (
                             <Link 

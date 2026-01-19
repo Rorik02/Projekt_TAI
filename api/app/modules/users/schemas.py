@@ -57,3 +57,15 @@ class UserOut(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class UserOut(UserBase):
+    id: int
+    first_name: str
+    last_name: str
+    role: str
+    role_request: Optional[str] = None
+    ...
+
+
+
+    

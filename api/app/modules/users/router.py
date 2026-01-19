@@ -148,3 +148,56 @@ def delete_address(
     db.delete(address)
     db.commit()
     return {"message": "Adres usunięty"}
+
+@router.post("/request-owner")
+def request_restaurant_owner(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "user":
+        raise HTTPException(status_code=400, detail="Nie możesz złożyć wniosku")
+
+    if current_user.role_request == "pending":
+        raise HTTPException(status_code=400, detail="Wniosek już został wysłany")
+
+    current_user.role_request = "pending"
+    db.commit()
+
+    return {"message": "Wniosek o restauratora został wysłany"}
+
+@router.get("/owner-requests", response_model=List[schemas.UserOut])
+def get_owner_requests(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403)
+
+    return db.query(models.User).filter(
+        models.User.role_request == "pending"
+    ).all()
+
+@router.put("/{user_id}/owner-decision")
+def owner_decision(
+    user_id: int,
+    approve: bool,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403)
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404)
+
+    if approve:
+        user.role = "właściciel"
+        user.role_request = None
+    else:
+        user.role_request = "rejected"
+
+    db.commit()
+    return {"message": "Decyzja zapisana"}
+
+
