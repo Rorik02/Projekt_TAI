@@ -73,17 +73,10 @@ app = FastAPI(lifespan=lifespan)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["http://localhost:3000"],  # Adres twojego frontendu
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=[
-        "Authorization",
-        "Content-Type",
-        "Accept",
-    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -92,4 +85,5 @@ app.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(restaurants_router, prefix="/restaurants", tags=["Restaurants"])
 
 # <--- POPRAWKA: orders_router to moduł, w środku ma obiekt 'router'
-app.include_router(orders_router.router)
+app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
+#app.include_router(orders_router.router, prefix="/orders", tags=["orders"])

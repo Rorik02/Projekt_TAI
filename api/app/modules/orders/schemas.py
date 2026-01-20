@@ -11,7 +11,7 @@ class OrderItemCreate(BaseModel):
 class OrderItemResponse(OrderItemCreate):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True  # Zamiast orm_mode dla Pydantic v2
 
 class OrderCreate(BaseModel):
     restaurant_id: int
@@ -37,5 +37,9 @@ class OrderResponse(BaseModel):
     nip: Optional[str]
     items: List[OrderItemResponse]
     
+    # Dodajemy pola z informacjami o restauracji
+    restaurant_name: str
+    restaurant_address: str
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
