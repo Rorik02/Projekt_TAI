@@ -6,6 +6,8 @@ import { useCart } from '../../context/CartContext';
 import blikImg from '../../assets/blik.png';
 import cardImg from '../../assets/karta.png';
 
+import OrderDocument from "../OrderDocument/OrderDocument";
+
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cartItems, cartRestaurant, cartTotal, removeFromCart, clearCart } = useCart();
     const token = localStorage.getItem("access_token");
@@ -31,6 +33,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     // --- DOKUMENT ZAKUPU ---
     const [documentType, setDocumentType] = useState("receipt"); // 'receipt' lub 'invoice'
     const [nip, setNip] = useState("");
+
+    const [orderData, setOrderData] = useState(null);
+    const [showDocument, setShowDocument] = useState(false);
+
 
     // --- FORMATOWANIE KARTY (spacja co 4 cyfry) ---
     const handleCardNumberChange = (e) => {
@@ -95,6 +101,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             }
 
             const order = await response.json();
+            setOrderData(order);
+            setShowDocument(true);
             console.log("Zamówienie utworzone:", order);
             return order;
 
@@ -165,19 +173,36 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     // --- FINALIZACJA ---
-    const handlePlaceOrder = () => {
-        const docInfo = documentType === 'invoice' ? `Faktura VAT (NIP: ${nip})` : 'Paragon';
+    const handlePlaceOrder = async () => {
+        try {
+            const order = await sendOrderToBackend();
 
-        // Tutaj będzie logika wysłania do API
-        alert(`🎉 Zamówienie przyjęte!\nDokument: ${docInfo}`);
+            // Dodaj alert tylko dla informacji
+            alert(`🎉 Zamówienie przyjęte!\nNumer: #${order.id}`);
 
-        // Resetowanie stanu
-        clearCart();
-        setStep(1);
-        setBlikCode("");
-        setCardData({ number: "", date: "", cvc: "" });
-        setNip("");
-        onClose();
+            // Ustaw dane i pokaż dokument
+            setOrderData(order);
+            setShowDocument(true);
+
+            // NIE zamykaj modalnego okna od razu!
+            // onClose(); // ← ZAKOMENTUJ TĘ LINIĘ
+
+            // NIE czyść też koszyka, aż użytkownik zamknie dokument
+            // clearCart(); // ← ZAKOMENTUJ
+
+            // Reset tylko formularza
+
+
+            setStep(1);
+            setBlikCode("");
+            setCardData({ number: "", date: "", cvc: "" });
+            setNip("");
+            //onClose();
+        }
+        catch (e) {
+            alert("❌ Nie udało się złożyć zamówienia");
+
+        }
     };
 
     // ================= WIDOKI KROKÓW =================
@@ -594,6 +619,17 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     </div>
                 )}
             </div>
+            {showDocument && (
+                <OrderDocument
+                    order={orderData}
+                    onClose={() => {
+                        setShowDocument(false);
+                        onClose(); // Zamknij główny modal CheckoutModal
+                    }}
+                    clearCart={clearCart} // Przekaż funkcję czyszczenia koszyka
+                />
+            )}
+
         </div>
     );
 };

@@ -2,27 +2,32 @@ import React, { useState } from 'react';
 import MenuModal from '../MenuModal/MenuModal';
 
 const CATEGORIES = [
-  "Wszystkie", "Italian", "Japanese", "American", "Chinese", "Mexican",
-  "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
+    "Wszystkie", "Italian", "Japanese", "American", "Chinese", "Mexican",
+    "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
 ];
 
-// ODBIERAMY DANE PRZEZ PROPS (restaurants, onSelectRestaurant, selectedId)
-const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
+const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMenu }) => {
     
-    // --- STANY MENU ---
+    // --- STANY MENU --- (ODKOMENTUJ jeśli chcesz lokalny modal)
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuProducts, setMenuProducts] = useState([]);
     const [menuRestaurant, setMenuRestaurant] = useState(null);
-
-    // --- STANY FILTRÓW ---
+    
+    // --- STANY FILTRÓW --- (ODKOMENTUJ)
     const [minRating, setMinRating] = useState(0);
     const [selectedCuisine, setSelectedCuisine] = useState("Wszystkie");
 
     // --- FUNKCJA OTWIERAJĄCA MENU ---
     const handleOpenMenu = async (restaurant) => {
+        // Lokalne ustawienie stanu (jeśli chcesz lokalny modal)
         setMenuRestaurant(restaurant);
-        setMenuProducts([]); 
-        setIsMenuOpen(true); 
+        setMenuProducts([]);
+        setIsMenuOpen(true);
+        
+        // Wywołujemy funkcję z rodzica (żeby mapa też wiedziała)
+        if (onShowMenu) {
+            onShowMenu(restaurant);
+        }
 
         try {
             const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurant.id}/products`);
@@ -35,12 +40,12 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
         }
     };
 
-    // --- FILTROWANIE (Na podstawie danych otrzymanych z props) ---
+    // --- FILTROWANIE ---
     const filteredRestaurants = restaurants.filter(restaurant => {
         if (restaurant.rating < minRating) return false;
         if (selectedCuisine !== "Wszystkie") {
-            const cuisinesData = Array.isArray(restaurant.cuisines) 
-                ? restaurant.cuisines.join(" ") 
+            const cuisinesData = Array.isArray(restaurant.cuisines)
+                ? restaurant.cuisines.join(" ")
                 : restaurant.cuisines || "";
             if (!cuisinesData.toLowerCase().includes(selectedCuisine.toLowerCase())) return false;
         }
@@ -50,9 +55,9 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
             
-            {/* MODAL MENU (Niewidoczny, dopóki nie klikniesz) */}
-            <MenuModal 
-                isOpen={isMenuOpen} 
+            {/* MODAL MENU (Lokalny - zakomentuj jeśli używasz globalnego z RestaurantsPage) */}
+            <MenuModal
+                isOpen={isMenuOpen}
                 onClose={() => setIsMenuOpen(false)}
                 restaurant={menuRestaurant}
                 products={menuProducts}
@@ -68,7 +73,7 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
                     {/* Filtr Kuchni */}
                     <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Rodzaj Kuchni</label>
-                        <select 
+                        <select
                             value={selectedCuisine}
                             onChange={(e) => setSelectedCuisine(e.target.value)}
                             className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
@@ -82,7 +87,7 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
                     {/* Filtr Oceny */}
                     <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Minimalna ocena</label>
-                        <select 
+                        <select
                             value={minRating}
                             onChange={(e) => setMinRating(Number(e.target.value))}
                             className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
@@ -96,12 +101,12 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
                 </div>
             </div>
 
-            {/* --- LISTA KAFELKÓW (Scrollowalna) --- */}
+            {/* --- LISTA KAFELKÓW --- */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {filteredRestaurants.length === 0 ? (
                     <div className="text-center py-10">
                         <p className="text-gray-500 dark:text-gray-400">Brak wyników.</p>
-                        <button 
+                        <button
                             onClick={() => { setMinRating(0); setSelectedCuisine("Wszystkie"); }}
                             className="mt-2 text-purple-600 hover:underline text-sm font-bold"
                         >
@@ -112,7 +117,6 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
                     filteredRestaurants.map((restaurant) => (
                         <div 
                             key={restaurant.id} 
-                            // Tu używamy funkcji przekazanej z rodzica (żeby mapa wiedziała co kliknięto)
                             onClick={() => onSelectRestaurant && onSelectRestaurant(restaurant)}
                             className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer flex flex-col group border ${
                                 selectedId === restaurant.id 
@@ -150,8 +154,6 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId }) => {
                     ))
                 )}
             </div>
-            
-            {/* USUNĘLIŚMY Z TEGO MIEJSCA PRAWĄ KOLUMNĘ Z MAPĄ */}
         </div>
     );
 };

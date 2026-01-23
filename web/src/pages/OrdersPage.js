@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import OrderDocument from "../components/OrderDocument/OrderDocument.jsx";
 
 // --- MOCK DATA (Przykładowa historia zamówień) ---
 const MOCK_HISTORY = [
@@ -36,13 +37,13 @@ const MOCK_HISTORY = [
 
 // Konfiguracja wyglądu statusów
 const STATUS_CONFIG = {
-    pending: { label: "Oczekujące", color: "bg-yellow-100 text-yellow-700 border-yellow-300", icon: "⏳" },
-    confirmed: { label: "Potwierdzone", color: "bg-blue-100 text-blue-700 border-blue-300", icon: "✅" },
-    preparing: { label: "W przygotowaniu", color: "bg-purple-100 text-purple-700 border-purple-300", icon: "👨‍🍳" },
-    delivering: { label: "W dostawie", color: "bg-orange-100 text-orange-700 border-orange-300", icon: "🚚" },
-    delivered: { label: "Dostarczono", color: "bg-green-100 text-green-700 border-green-300", icon: "🎉" },
-    cancelled: { label: "Anulowano", color: "bg-red-100 text-red-700 border-red-300", icon: "❌" },
-    completed: { label: "Zakończono", color: "bg-green-100 text-green-700 border-green-300", icon: "✅" }
+    pending: { label: "Oczekujące", color: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300", icon: "⏳" },
+    confirmed: { label: "Potwierdzone", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300", icon: "✅" },
+    preparing: { label: "W przygotowaniu", color: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300", icon: "👨‍🍳" },
+    delivering: { label: "W dostawie", color: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300", icon: "🚚" },
+    delivered: { label: "Dostarczono", color: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300", icon: "🎉" },
+    cancelled: { label: "Anulowano", color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300", icon: "❌" },
+    completed: { label: "Zakończono", color: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300", icon: "✅" }
 };
 
 const STATUS_MAPPING = {
@@ -55,23 +56,16 @@ const STATUS_MAPPING = {
 };
 
 const OrdersPage = () => {
-    const [selectedOrder, setSelectedOrder] = useState(null);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showDocument, setShowDocument] = useState(false);
+    const [documentOrder, setDocumentOrder] = useState(null);
     const navigate = useNavigate();
 
     const token = localStorage.getItem("access_token");
 
-    useEffect(() => {
-        if (!token) {
-            navigate("/login");
-            return;
-        }
-        fetchOrders();
-    }, [token, navigate]);
-
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch("http://127.0.0.1:8000/orders/my-orders", {
@@ -98,7 +92,15 @@ const OrdersPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        if (!token) {
+            navigate("/login");
+            return;
+        }
+        fetchOrders();
+    }, [token, navigate, fetchOrders]);
 
     const getStatusConfig = (status) => {
         const mappedStatus = STATUS_MAPPING[status] || status;
@@ -118,13 +120,14 @@ const OrdersPage = () => {
         });
     };
 
-    const handleDownload = (orderId, type) => {
-        alert(`Pobieranie dokumentu ${type} dla zamówienia #${orderId}...`);
-    };
-
     const handleReOrder = (order) => {
         // TODO: Implementacja ponawiania zamówienia
-        alert(`Funkcja ponawiania zamówienia z ${order.restaurant_name} wkrótce!`);
+        alert(`Funkcja ponawiania zamówienia z ${order.restaurant_name || order.restaurant} wkrótce!`);
+    };
+
+    const handleShowDocument = (order) => {
+        setDocumentOrder(order);
+        setShowDocument(true);
     };
 
     if (loading) {
@@ -196,7 +199,6 @@ const OrdersPage = () => {
                             const status = getStatusConfig(order.status || 'completed');
                             const orderDate = order.created_at || order.date;
                             const restaurantName = order.restaurant_name || order.restaurant;
-                            const restaurantAddress = order.restaurant_address || order.restaurantAddress;
                             const deliveryAddress = order.delivery_address || order.deliveryAddress;
                             const total = order.total_amount || order.total;
                             const paymentMethod = order.payment_method || order.payment;
@@ -267,10 +269,10 @@ const OrdersPage = () => {
                                             </button>
                                         )}
                                         <button
-                                            onClick={() => setSelectedOrder(order)}
-                                            className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg font-bold text-gray-700 dark:text-white hover:bg-purple-50 dark:hover:bg-gray-600 hover:text-purple-600 transition shadow-sm"
+                                            onClick={() => handleShowDocument(order)}
+                                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition transform hover:scale-105 flex items-center gap-2"
                                         >
-                                            Szczegóły i Faktura 📄
+                                            📄 Pokaż dokument
                                         </button>
                                     </div>
                                 </div>
@@ -280,99 +282,15 @@ const OrdersPage = () => {
                 )}
             </div>
 
-            {/* MODAL SZCZEGÓŁÓW */}
-            {selectedOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="absolute inset-0" onClick={() => setSelectedOrder(null)}></div>
-                    
-                    <div className="relative bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                        {/* Header Modala */}
-                        <div className="flex justify-between items-start mb-6 pb-4 border-b dark:border-gray-700">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Szczegóły zamówienia</h2>
-                                <p className="text-sm text-purple-600 font-bold">#{selectedOrder.id}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    📅 {formatDate(selectedOrder.created_at || selectedOrder.date)}
-                                </p>
-                            </div>
-                            <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-red-500 text-2xl bg-gray-100 dark:bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center transition">✕</button>
-                        </div>
-
-                        {/* Informacje ogólne */}
-                        <div className="mb-6">
-                            <div className="text-xs text-gray-500 uppercase font-bold mb-1">Restauracja</div>
-                            <div className="font-bold dark:text-white text-lg">
-                                {selectedOrder.restaurant_name || selectedOrder.restaurant}
-                            </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-300">
-                                {selectedOrder.restaurant_address || selectedOrder.restaurantAddress}
-                            </div>
-                        </div>
-
-                        {/* Lista produktów */}
-                        <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl space-y-3 mb-6">
-                            <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">Pozycje na rachunku</h3>
-                            {(selectedOrder.items || []).map((item, idx) => {
-                                const itemName = item.product_name || item.name;
-                                const quantity = item.quantity || item.qty;
-                                const price = item.price;
-                                
-                                return (
-                                    <div key={idx} className="flex justify-between text-sm items-center border-b border-gray-200 dark:border-gray-600 last:border-0 pb-2 last:pb-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-purple-600 bg-purple-100 dark:bg-purple-900/50 px-2 rounded text-xs">
-                                                {quantity}x
-                                            </span>
-                                            <span className="text-gray-800 dark:text-gray-200">{itemName}</span>
-                                        </div>
-                                        <span className="font-bold text-gray-900 dark:text-white">
-                                            {(price * quantity).toFixed(2)} zł
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                            <div className="border-t-2 border-dashed border-gray-300 dark:border-gray-500 pt-3 mt-2 flex justify-between font-bold text-lg">
-                                <span className="dark:text-white">Suma:</span>
-                                <span className="text-purple-600">
-                                    {(selectedOrder.total_amount || selectedOrder.total).toFixed(2)} zł
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Info o płatności i dostawie */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="p-3 border rounded-xl dark:border-gray-600 bg-white dark:bg-gray-800">
-                                <div className="text-xs text-gray-500 uppercase font-bold mb-1">Płatność</div>
-                                <div className="font-bold dark:text-white flex items-center gap-2">
-                                    {((selectedOrder.payment_method || selectedOrder.payment) === 'blik') ? '📱' : '💳'} 
-                                    {selectedOrder.payment_method || selectedOrder.payment}
-                                </div>
-                            </div>
-                            <div className="p-3 border rounded-xl dark:border-gray-600 bg-white dark:bg-gray-800">
-                                <div className="text-xs text-gray-500 uppercase font-bold mb-1">Dokument</div>
-                                <div className="font-bold dark:text-white">
-                                    {selectedOrder.document_type === 'invoice' ? 'Faktura VAT' : 'Paragon'}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Adres dostawy */}
-                        <div className="p-3 border rounded-xl dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 mb-6">
-                            <div className="text-xs text-gray-500 uppercase font-bold mb-1">Adres dostawy</div>
-                            <div className="font-medium dark:text-white flex items-center gap-2">
-                                📍 {selectedOrder.delivery_address || selectedOrder.deliveryAddress}
-                            </div>
-                        </div>
-
-                        {/* Przycisk Pobierania */}
-                        <button
-                            onClick={() => handleDownload(selectedOrder.id, selectedOrder.document_type || selectedOrder.document)}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2"
-                        >
-                            📥 Pobierz {selectedOrder.document_type === 'invoice' ? 'Fakturę' : 'Paragon'} (PDF)
-                        </button>
-                    </div>
-                </div>
+            {/* ORDER DOCUMENT MODAL */}
+            {showDocument && documentOrder && (
+                <OrderDocument
+                    order={documentOrder}
+                    onClose={() => {
+                        setShowDocument(false);
+                        setDocumentOrder(null);
+                    }}
+                />
             )}
         </div>
     );

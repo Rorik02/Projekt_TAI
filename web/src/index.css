@@ -54,3 +54,13 @@ code {
 @tailwind components;
 @tailwind utilities;
 
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+}
