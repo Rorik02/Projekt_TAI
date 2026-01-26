@@ -88,11 +88,30 @@ const Dashboard = () => {
   };
 
   // --- ZMIANA STATUSU ZAMÓWIENIA ---
-  const handleStatusChange = (orderId, newStatus) => {
-      alert(`Zmieniono status zamówienia #${orderId} na: ${newStatus}`);
-      // Optymistyczna aktualizacja
-      setOrders(prev => prev.map(o => o.id === orderId ? {...o, status: newStatus} : o));
-  };
+  const handleStatusChange = async (orderId, newStatus) => {
+  try {
+    // Optymistyczna aktualizacja w UI
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+
+    // Wyślij do backendu
+    const res = await fetch(`http://127.0.0.1:8000/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: { 
+        "Content-Type": "application/json", 
+        "Authorization": `Bearer ${token}` 
+      },
+      body: JSON.stringify({ new_status: newStatus }) // <-- zmiana nazwy pola
+    });
+
+    if (!res.ok) throw new Error("Nie udało się zaktualizować statusu w backendzie");
+
+  } catch (err) {
+    alert(err.message);
+    // rollback w przypadku błędu
+    fetchOrders();
+  }
+};
+
 
   // --- OBSŁUGA WYBORU RESTAURACJI (MENU) ---
   const handleSelectRestaurant = async (restaurant) => {
