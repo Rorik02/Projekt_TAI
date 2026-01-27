@@ -156,16 +156,16 @@ def get_restaurant_orders(
 ):
     if current_user.role != "właściciel":
         return []
-    
+
     my_restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
     if not my_restaurant:
         return []
-    
+
     orders = db.query(models.Order)\
         .filter(models.Order.restaurant_id == my_restaurant.id)\
         .order_by(models.Order.created_at.desc())\
         .all()
-    
+
     result = []
     for order in orders:
         restaurant = db.query(Restaurant).filter(Restaurant.id == order.restaurant_id).first()
@@ -177,6 +177,7 @@ def get_restaurant_orders(
         })
     return result
 
+
 # ------------------------------------------
 # Zmiana statusu zamówienia przez właściciela
 # ------------------------------------------
@@ -187,23 +188,39 @@ class OrderStatusUpdate(BaseModel):
 @router.patch("/{order_id}/status", response_model=schemas.OrderResponse)
 def update_order_status(
     order_id: int,
-    status_update: OrderStatusUpdate,   # <- teraz FastAPI bierze new_status z body
+    status_update: OrderStatusUpdate,   # FastAPI bierze new_status z body
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     new_status = status_update.new_status
-
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Zamówienie nie istnieje")
 
-    if current_user.role != "właściciel":
+    # Jeśli właściciel restauracji
+    if current_user.role == "właściciel":
+        restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
+        if not restaurant or restaurant.id != order.restaurant_id:
+            raise HTTPException(status_code=403, detail="Nie możesz zmieniać zamówień tej restauracji")
+    
+    # Jeśli klient
+    elif current_user.role in ["klient", "user"]:
+        if order.user_id != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="Nie możesz zmieniać cudzego zamówienia"
+            )
+        if new_status not in ["delivered", "completed"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Klient może tylko potwierdzić odbiór"
+            )
+    
+    # Inne role
+    else:
         raise HTTPException(status_code=403, detail="Brak uprawnień")
 
-    restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
-    if not restaurant or restaurant.id != order.restaurant_id:
-        raise HTTPException(status_code=403, detail="Nie możesz zmieniać zamówień tej restauracji")
-
+    # Aktualizacja statusu
     order.status = new_status
     db.commit()
     db.refresh(order)
@@ -232,3 +249,4 @@ def update_order_status(
         "restaurant_name": restaurant.name if restaurant else "",
         "restaurant_address": f"{restaurant.street} {restaurant.number}, {restaurant.city}" if restaurant else ""
     }
+

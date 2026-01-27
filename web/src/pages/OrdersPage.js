@@ -130,6 +130,42 @@ const OrdersPage = () => {
         setShowDocument(true);
     };
 
+    const handleConfirmDelivery = async (orderId) => {
+    if (!window.confirm("Czy na pewno odebrałeś to zamówienie?")) return;
+
+    try {
+        const res = await fetch(
+            `http://127.0.0.1:8000/orders/${orderId}/status`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ new_status: "delivered" }), // backend teraz wymaga pola "new_status"
+            }
+        );
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || "Nie udało się potwierdzić odbioru");
+        }
+
+        const updatedOrder = await res.json();
+
+        // aktualizacja tylko tego zamówienia w stanie
+        setOrders(prev =>
+            prev.map(o =>
+                o.id === updatedOrder.id ? { ...o, status: updatedOrder.status } : o
+            )
+        );
+
+    } catch (err) {
+        alert("Błąd: " + err.message);
+    }
+    };
+
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 pt-20">
@@ -260,6 +296,16 @@ const OrdersPage = () => {
 
                                     {/* Stopka: Przyciski */}
                                     <div className="bg-gray-50 dark:bg-gray-900/50 p-4 flex justify-end items-center gap-3">
+                                        
+                                        {order.status === "delivery" && (
+                                            <button
+                                                onClick={() => handleConfirmDelivery(order.id)}
+                                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition"
+                                            >
+                                                ✅ Odebrałem zamówienie
+                                            </button>
+                                        )}
+                                        
                                         {['delivered', 'completed'].includes(order.status) && (
                                             <button 
                                                 onClick={() => handleReOrder(order)}
