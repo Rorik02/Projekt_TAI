@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Tex
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.database import Base
+from pydantic import BaseModel
 
 class Order(Base):
     __tablename__ = "orders"
@@ -59,3 +60,7 @@ class Review(Base):
     order_id = Column(Integer, ForeignKey("orders.id"), unique=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+# --- MODEL REQUEST ---
+class ReorderRequest(BaseModel):
+    order_id: int

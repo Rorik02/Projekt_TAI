@@ -9,12 +9,14 @@ from app.modules.users.models import User
 from app.modules.restaurants.models import Restaurant, Product
 from . import models, schemas
 from pydantic import BaseModel
-from .models import Order, Review
-from .schemas import ReviewCreate
+from .models import Order, Review, OrderItem
+from .schemas import ReviewCreate, ReorderRequest
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
 
 # ==========================================
 # ENDPOINTY ZAMÓWIEŃ
@@ -345,3 +347,41 @@ def get_my_restaurant_reviews(
 
 
 
+# =========================
+# Ponowne zamówienie
+# =========================
+
+@router.post("/reorder")
+def reorder(request: ReorderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    order = db.query(Order).filter(Order.id == request.order_id, Order.user_id == current_user.id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Nie znaleziono zamówienia")
+
+    new_order = Order(
+        user_id=current_user.id,
+        restaurant_id=order.restaurant_id,
+        status="confirmed",
+        total_amount=order.total_amount,
+        delivery_address=order.delivery_address,
+        delivery_time_type=order.delivery_time_type,
+        payment_method=order.payment_method,
+        document_type=order.document_type,
+        remarks=order.remarks,
+        nip=order.nip
+    )
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    for item in order.items:
+        new_item = OrderItem(
+            order_id=new_order.id,
+            name=item.name,
+            quantity=item.quantity,
+            price=item.price,
+            product_id=item.product_id
+        )
+        db.add(new_item)
+    db.commit()
+
+    return {"detail": "Zamówienie zostało ponowione", "new_order_id": new_order.id}

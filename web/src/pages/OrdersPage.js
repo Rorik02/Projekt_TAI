@@ -41,7 +41,7 @@ const STATUS_CONFIG = {
     confirmed: { label: "Potwierdzone", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300", icon: "✅" },
     preparing: { label: "W przygotowaniu", color: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300", icon: "👨‍🍳" },
     delivering: { label: "W dostawie", color: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300", icon: "🚚" },
-    delivered: { label: "Dostarczono", color: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300", icon: "🎉" },
+    delivered: { label: "Dostarczono", color: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300"},
     cancelled: { label: "Anulowano", color: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300", icon: "❌" },
     completed: { label: "Zakończono", color: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300", icon: "✅" }
 };
@@ -125,10 +125,36 @@ const OrdersPage = () => {
         });
     };
 
-    const handleReOrder = (order) => {
-        // TODO: Implementacja ponawiania zamówienia
-        alert(`Funkcja ponawiania zamówienia z ${order.restaurant_name || order.restaurant} wkrótce!`);
-    };
+    const handleReOrder = async (order) => {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/orders/reorder", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ order_id: order.id }) // <-- dokładnie takie pole
+        });
+
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || "Nie udało się ponowić zamówienia");
+        }
+
+        const data = await res.json();
+        alert(`Zamówienie ponowione! Nowy ID: ${data.new_order_id}`);
+
+        // Opcjonalnie pobierz ponownie zamówienia:
+        fetchOrders();
+
+    } catch (err) {
+        console.error("Błąd ponownego zamówienia:", err);
+        alert("Błąd ponownego zamówienia: " + (err.message || JSON.stringify(err)));
+    }
+};
+
+
+
 
     const handleShowDocument = (order) => {
         setDocumentOrder(order);

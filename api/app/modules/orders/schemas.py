@@ -62,3 +62,7 @@ class OrderStatusUpdate(BaseModel):
 class ReviewCreate(BaseModel):
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
+
+# --- MODEL REQUEST ---
+class ReorderRequest(BaseModel):
+    order_id: int
