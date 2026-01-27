@@ -61,6 +61,11 @@ const OrdersPage = () => {
     const [error, setError] = useState(null);
     const [showDocument, setShowDocument] = useState(false);
     const [documentOrder, setDocumentOrder] = useState(null);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewOrder, setReviewOrder] = useState(null);
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState("");
+
     const navigate = useNavigate();
 
     const token = localStorage.getItem("access_token");
@@ -164,6 +169,65 @@ const OrdersPage = () => {
         alert("Błąd: " + err.message);
     }
     };
+
+    const openReviewModal = (order) => {
+    setReviewOrder(order);
+    setShowReviewModal(true); 
+    setRating(0);
+    setComment("");
+    };
+
+
+    const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewOrder(null);
+    setRating(0);
+    setComment("");
+    };
+
+
+    const submitReview = async () => {
+        if (rating < 1) {
+            alert("Wybierz ocenę (1–5 gwiazdek)");
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `http://127.0.0.1:8000/orders/${reviewOrder.id}/review`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        rating,
+                        comment
+                    })
+                }
+            );
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.detail || "Błąd dodawania opinii");
+            }
+
+            // oznacz zamówienie jako ocenione
+            setOrders(prev =>
+                prev.map(o =>
+                    o.id === reviewOrder.id ? { ...o, reviewed: true } : o
+                )
+            );
+
+            setReviewOrder(null);
+
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    
 
 
     if (loading) {
@@ -296,7 +360,13 @@ const OrdersPage = () => {
 
                                     {/* Stopka: Przyciski */}
                                     <div className="bg-gray-50 dark:bg-gray-900/50 p-4 flex justify-end items-center gap-3">
-                                        
+
+                                        {order.status === "delivered" && !order.reviewed && (
+                                            <button onClick={() => openReviewModal(order)}>
+                                                ⭐ Oceń restaurację
+                                            </button>
+                                        )}
+
                                         {order.status === "delivery" && (
                                             <button
                                                 onClick={() => handleConfirmDelivery(order.id)}
@@ -338,6 +408,51 @@ const OrdersPage = () => {
                     }}
                 />
             )}
+
+            {/* REVIEW MODAL */}
+            {reviewOrder && showReviewModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
+                        <h2 className="text-xl font-bold mb-4">
+                            ⭐ Oceń {reviewOrder.restaurant_name}
+                        </h2>
+
+                        {/* Gwiazdki */}
+                        <div className="flex gap-2 text-3xl mb-4">
+                            {[1,2,3,4,5].map(star => (
+                                <button
+                                    key={star}
+                                    onClick={() => setRating(star)}
+                                >
+                                    {star <= rating ? "⭐" : "☆"}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Komentarz */}
+                        <textarea
+                            className="w-full border rounded-lg p-2 mb-4 dark:bg-gray-700"
+                            placeholder="Opcjonalny komentarz…"
+                            value={comment}
+                            onChange={e => setComment(e.target.value)}
+                        />
+
+                        <div className="flex justify-end gap-3">
+                            <button onClick={closeReviewModal} className="px-4 py-2">
+                                    Anuluj
+                            </button>
+                            <button
+                                onClick={submitReview}
+                                className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+                            >
+                                Wyślij opinię
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
         </div>
     );
 };

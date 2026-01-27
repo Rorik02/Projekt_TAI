@@ -8,6 +8,7 @@ class Restaurant(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     rating = Column(Float, default=0.0)
+    #average_rating = Column(Float, default=0.0)
     cuisines = Column(String) 
     city = Column(String, default="")
     street = Column(String, default="")

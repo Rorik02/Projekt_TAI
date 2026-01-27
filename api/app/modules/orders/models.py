@@ -45,3 +45,17 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("app.modules.restaurants.models.Product")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True)
+    rating = Column(Integer, nullable=False)  # 1–5
+    comment = Column(String, nullable=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+    restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
+    order_id = Column(Integer, ForeignKey("orders.id"), unique=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

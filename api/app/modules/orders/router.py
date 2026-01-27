@@ -9,6 +9,9 @@ from app.modules.users.models import User
 from app.modules.restaurants.models import Restaurant, Product
 from . import models, schemas
 from pydantic import BaseModel
+from .models import Order, Review
+from .schemas import ReviewCreate
+
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -249,4 +252,96 @@ def update_order_status(
         "restaurant_name": restaurant.name if restaurant else "",
         "restaurant_address": f"{restaurant.street} {restaurant.number}, {restaurant.city}" if restaurant else ""
     }
+
+
+# =========================
+# OCENY RESTAURACJI
+# =========================
+
+@router.post("/{order_id}/review")
+def add_review(
+    order_id: int, 
+    review: ReviewCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    order = db.query(Order).filter(Order.id == order_id).first()
+
+    if not order:
+        raise HTTPException(404, "Zamówienie nie istnieje")
+
+    if order.user_id != current_user.id:
+        raise HTTPException(403, "Nie możesz oceniać cudzych zamówień")
+
+    if order.status not in ["delivered", "completed"]:
+        raise HTTPException(400, "Zamówienie nie zostało jeszcze dostarczone")
+
+    existing = db.query(Review).filter(Review.order_id == order.id).first()
+    if existing:
+        raise HTTPException(400, "To zamówienie jest już ocenione")
+
+    # --- dodajemy nową recenzję ---
+    new_review = Review(
+        rating=review.rating,
+        comment=review.comment,
+        user_id=current_user.id,
+        restaurant_id=order.restaurant_id,
+        order_id=order.id
+    )
+    db.add(new_review)
+    db.commit()
+
+    # --- przelicz średnią ocenę restauracji ---
+    restaurant = db.query(Restaurant).filter(Restaurant.id == order.restaurant_id).first()
+    all_reviews = db.query(Review).filter(Review.restaurant_id == restaurant.id).all()
+    restaurant.rating = round(sum(r.rating for r in all_reviews) / len(all_reviews),1)
+    db.commit()
+
+    return {
+        "message": "Dziękujemy za ocenę!",
+        "average_rating": restaurant.rating
+    }
+
+
+# =========================
+# GET MOJE REVIEWS (dla właściciela)
+# =========================
+@router.get("/reviews/mine")
+def get_my_restaurant_reviews(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "właściciel":
+        raise HTTPException(403, "Nie jesteś właścicielem żadnej restauracji")
+
+    # Pobierz restaurację właściciela
+    restaurant = db.query(Restaurant).filter(Restaurant.owner_id == current_user.id).first()
+    if not restaurant:
+        return []
+
+    # Pobierz wszystkie recenzje dla tej restauracji
+    reviews = db.query(Review).filter(Review.restaurant_id == restaurant.id).all()
+    
+    result = []
+    for r in reviews:
+        # Pobierz powiązane zamówienie
+        order = db.query(Order).filter(Order.id == r.order_id).first()
+        items = [{"quantity": i.quantity, "name": i.name} for i in order.items] if order else []
+
+        # Dodaj recenzję wraz z produktami zamówienia
+        result.append({
+            "id": r.id,
+            "rating": r.rating,
+            "comment": r.comment,
+            "user_id": r.user_id,
+            "order_id": r.order_id,
+            "restaurant_id": restaurant.id,
+            "restaurant_name": restaurant.name,
+            "created_at": r.created_at,
+            "items": items  # <-- lista zamówionych produktów
+        })
+
+    return result
+
+
 

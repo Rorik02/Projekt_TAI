@@ -21,7 +21,7 @@ const Dashboard = () => {
   const hasAccess = normalizedRole === "właściciel" || normalizedRole === "owner" || normalizedRole === "admin";
 
   // --- STANY ---
-  const [activeTab, setActiveTab] = useState('restaurants'); // 'restaurants' | 'orders'
+  const [activeTab, setActiveTab] = useState('restaurants'); // 'restaurants' | 'orders' | 'reviews'
 
   // DANE
   const [restaurants, setRestaurants] = useState([]);
@@ -31,6 +31,12 @@ const Dashboard = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null); // Do edycji menu
   const [selectedRestaurantForOrders, setSelectedRestaurantForOrders] = useState(null); // Do podglądu zamówień
   
+  // Opinie
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [selectedRestaurantForReviews, setSelectedRestaurantForReviews] = useState(null);
+
+
   // Loadingi
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -55,6 +61,11 @@ const Dashboard = () => {
     }
     // eslint-disable-next-line
   }, [hasAccess]);
+
+  // --- ŁADOWANIE RECENZJI PO PRZEŁĄCZENIU ZAKŁADKI ---
+  useEffect(() => {
+    if (activeTab === 'reviews') loadReviews();
+  }, [activeTab]);
 
   const loadRestaurants = async () => {
     try {
@@ -215,6 +226,26 @@ const Dashboard = () => {
       ? orders.filter(o => o.restaurant_id === selectedRestaurantForOrders.id)
       : [];
 
+
+  // Zaladuj opinie
+  const loadReviews = async () => {
+    setLoadingReviews(true);
+    try {
+        const res = await fetch("http://127.0.0.1:8000/orders/reviews/mine", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Nie udało się pobrać recenzji");
+        const data = await res.json();
+        setReviews(data);
+    } catch (err) {
+        console.error(err);
+        setReviews([]);
+    } finally {
+        setLoadingReviews(false);
+    }
+};
+    
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white p-6 pt-24">
       
@@ -239,6 +270,12 @@ const Dashboard = () => {
                           {orders.filter(o => o.status === 'confirmed').length}
                       </span>
                   )}
+              </button>
+              <button 
+                  onClick={() => setActiveTab('reviews')}
+                  className={`px-4 py-2 rounded-md text-sm font-bold transition ${activeTab === 'reviews' ? 'bg-purple-600 text-white shadow' : 'text-gray-500 hover:text-purple-600'}`}
+              >
+                  ⭐ Recenzje
               </button>
           </div>
       </div>
@@ -428,7 +465,112 @@ const Dashboard = () => {
                     )}
                 </div>
              </div>
+
+            
         )}
+
+          {/* ================= ZAKŁADKA 3: RECENZJE ================= */}
+{activeTab === 'reviews' && (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+
+    {/* --- LEWA STRONA: LISTA RESTAURACJI --- */}
+    <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+      <div className="bg-gray-100 dark:bg-gray-700 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+        <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200">Gdzie sprawdzamy?</h2>
+        <button onClick={loadReviews} className="text-xs text-purple-600 font-bold hover:underline">Odśwież ↻</button>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        {restaurants.length === 0 ? (
+          <p className="text-center text-gray-500 mt-4">Brak aktywnych restauracji.</p>
+        ) : (
+          restaurants.map(r => (
+            <div
+              key={r.id}
+              onClick={() => setSelectedRestaurantForReviews(r)}
+              className={`p-4 rounded-lg cursor-pointer flex justify-between items-center border transition-all ${
+                selectedRestaurantForReviews?.id === r.id 
+                  ? "bg-purple-50 border-purple-500 dark:bg-gray-700 dark:border-purple-500 shadow-md" 
+                  : "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+            >
+              <div className="font-bold truncate text-gray-800 dark:text-white">{r.name}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    {/* --- PRAWA STRONA: RECENZJE WYBRANEJ RESTAURACJI --- */}
+<div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+  {!selectedRestaurantForReviews ? (
+    <div className="flex h-full items-center justify-center text-gray-400 flex-col gap-2 p-10 text-center">
+      <p className="text-lg">Wybierz restaurację z listy po lewej,</p>
+      <p className="text-sm">aby zobaczyć recenzje.</p>
+    </div>
+  ) : (
+    <>
+      {/* Nagłówek */}
+      <div className="bg-purple-50 dark:bg-gray-700/50 p-4 border-b dark:border-gray-600 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+          Recenzje: <span className="text-purple-600">{selectedRestaurantForReviews.name}</span>
+        </h2>
+        <span className="text-sm text-gray-500">
+          Łącznie: {reviews.filter(r => r.restaurant_id === selectedRestaurantForReviews.id).length}
+        </span>
+      </div>
+
+      {/* Tabela recenzji */}
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/40">
+        {loadingReviews ? (
+          <p className="text-center mt-4">Ładowanie recenzji...</p>
+        ) : reviews.filter(r => r.restaurant_id === selectedRestaurantForReviews.id).length === 0 ? (
+          <div className="text-center py-12 text-gray-400">
+            <span className="text-5xl block mb-3">📭</span>
+            <p>Brak recenzji dla tej restauracji.</p>
+          </div>
+        ) : (
+          <table className="w-full table-auto border-collapse text-left">
+            <thead>
+              <tr className="bg-gray-200 dark:bg-gray-700">
+                <th className="px-4 py-2 border-b border-gray-300 dark:border-gray-600">Zamówione produkty</th>
+                <th className="px-4 py-2 border-b border-gray-300 dark:border-gray-600">Ocena</th>
+                <th className="px-4 py-2 border-b border-gray-300 dark:border-gray-600">Komentarz</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviews
+                .filter(r => r.restaurant_id === selectedRestaurantForReviews.id)
+                .map(r => (
+                  <tr key={r.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      {r.items && r.items.length > 0
+                        ? r.items.map(i => `${i.name} x${i.quantity}`).join(", ")
+                        : "Brak danych"}
+                    </td>
+                    <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-yellow-500 font-bold">
+                      {r.rating.toFixed(1)} ⭐
+                    </td>
+                    <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      {r.comment || "Brak komentarza"}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
+  )}
+</div>
+
+  </div>
+)}
+
+
+
+
+
       </div>
 
       {/* --- MODALE (BEZ ZMIAN) --- */}
