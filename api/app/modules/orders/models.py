@@ -61,6 +61,4 @@ class Review(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-# --- MODEL REQUEST ---
-class ReorderRequest(BaseModel):
-    order_id: int
+

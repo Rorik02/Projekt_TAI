@@ -13,6 +13,10 @@ const RestaurantsPage = () => {
     const [user, setUser] = useState(null);
     const [addresses, setAddresses] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState(null);
+    const [restaurant, setRestaurant] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null)
 
     // MODAL ADRESU
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -28,6 +32,31 @@ const RestaurantsPage = () => {
         fetchUserData();
         fetchAdditionalAddresses();
     }, []);
+
+    useEffect(() => {
+    if (!selectedRestaurant) return;
+
+    const fetchRestaurantReviews = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(
+                `http://127.0.0.1:8000/restaurants/${selectedRestaurant.id}/reviews`
+            );
+            if (!res.ok) throw new Error("Nie udało się pobrać opinii");
+            const data = await res.json();
+            setReviews(data); // zapisujemy opinie w stanie
+        } catch (err) {
+            setError(err.message);
+            setReviews([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchRestaurantReviews();
+}, [selectedRestaurant]);
+
 
     // --- FUNKCJE FETCH ---
     const fetchRestaurants = async () => {
@@ -98,6 +127,8 @@ const RestaurantsPage = () => {
         setMenuRestaurant(restaurant);
         setIsMenuOpen(true);
         setMenuProducts([]);
+        setSelectedRestaurant(restaurant);
+
 
         try {
             const res = await fetch(`http://127.0.0.1:8000/restaurants/${restaurant.id}/products`);
@@ -119,6 +150,7 @@ const RestaurantsPage = () => {
                 onClose={() => setIsMenuOpen(false)}
                 restaurant={menuRestaurant}
                 products={menuProducts}
+                reviews={reviews} 
             />
 
             {/* GŁÓWNY UKŁAD */}

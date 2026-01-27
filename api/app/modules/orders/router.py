@@ -345,6 +345,38 @@ def get_my_restaurant_reviews(
 
     return result
 
+# =========================
+# GET reviews dla restauracji (dla klientów)
+# =========================
+@router.get("/{restaurant_id}/reviews")
+def get_restaurant_reviews(
+    restaurant_id: int,
+    db: Session = Depends(get_db)
+):
+    restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
+    if not restaurant:
+        raise HTTPException(404, detail="Restauracja nie istnieje")
+
+    reviews = db.query(Review).filter(Review.restaurant_id == restaurant.id).all()
+    
+    result = []
+    for r in reviews:
+        order = db.query(Order).filter(Order.id == r.order_id).first()
+        items = [{"quantity": i.quantity, "name": i.name} for i in order.items] if order else []
+
+        result.append({
+            "id": r.id,
+            "rating": r.rating,
+            "comment": r.comment,
+            "user_id": r.user_id,
+            "order_id": r.order_id,
+            "restaurant_id": restaurant.id,
+            "restaurant_name": restaurant.name,
+            "created_at": r.created_at,
+            "items": items
+        })
+    
+    return result
 
 
 # =========================

@@ -41,6 +41,9 @@ class OrderResponse(BaseModel):
     payment_method: str
     document_type: str
     nip: Optional[str]
+
+    remarks: Optional[str] = None   # ⬅⬅⬅ TO DODAJ
+
     items: List[OrderItemResponse]
     
     # Pola z informacjami o restauracji
