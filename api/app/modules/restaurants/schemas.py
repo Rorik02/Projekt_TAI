@@ -36,6 +36,7 @@ class RestaurantBase(BaseModel):
     city: str
     street: str
     number: str
+    description: Optional[str] = None
 
 class RestaurantCreate(RestaurantBase):
     rating: Optional[float] = 0.0
@@ -48,6 +49,7 @@ class RestaurantUpdate(BaseModel):
     street: Optional[str] = None
     number: Optional[str] = None
     rating: Optional[float] = None
+    description: Optional[str] = None
 
 # --- AKTUALIZACJA STATUSU ---
 class RestaurantStatusUpdate(BaseModel):

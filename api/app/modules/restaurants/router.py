@@ -87,7 +87,8 @@ def create_restaurant_application(
         latitude=lat,
         longitude=lon,
         status="pending",
-        owner_id=current_user.id
+        owner_id=current_user.id,
+        description=restaurant.description
     )
     db.add(db_restaurant)
     db.commit()
@@ -184,6 +185,8 @@ def update_restaurant_details(
         db_rest.cuisines = restaurant_update.cuisines
     if restaurant_update.rating is not None:
         db_rest.rating = restaurant_update.rating
+    if restaurant_update.description is not None:
+        db_rest.description = restaurant_update.description
 
     # Logika zmiany adresu -> Wymaga ponownego Geocodingu!
     address_changed = False
@@ -265,3 +268,24 @@ def get_available_cuisines(db: Session = Depends(get_db)):
                 cuisines_set.add(c.strip())
 
     return sorted(list(cuisines_set))
+
+# 10. Dodawanie opisu restauracji
+@router.put("/restaurants/{restaurant_id}", response_model=schemas.RestaurantOut)
+def update_restaurant(
+    restaurant_id: int,
+    payload: schemas.RestaurantUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
+):
+    rest = db.query(models.Restaurant).filter(models.Restaurant.id==restaurant_id, models.Restaurant.owner_id==user.id).first()
+    if not rest:
+        raise HTTPException(status_code=404, detail="Nie znaleziono restauracji")
+    
+    # aktualizacja tylko pól, które zostały przesłane
+    for key, value in payload.dict(exclude_unset=True).items():
+        setattr(rest, key, value)
+
+    db.commit()
+    db.refresh(rest)
+    return rest
+

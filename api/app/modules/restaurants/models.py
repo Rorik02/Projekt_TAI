@@ -23,6 +23,7 @@ class Restaurant(Base):
     rejection_reason = Column(String, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    description = Column(String, nullable=True, default="")  
 
     products = relationship("Product", back_populates="restaurant", cascade="all, delete-orphan")
     owner = relationship("app.modules.users.models.User", back_populates="restaurants")

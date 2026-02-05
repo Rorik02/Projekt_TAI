@@ -53,6 +53,13 @@ const Dashboard = () => {
       name: "", price: "", category: MENU_CATEGORIES[2] 
   });
 
+  // Description
+  const [isDescModalOpen, setIsDescModalOpen] = useState(false);
+  const [savingDesc, setSavingDesc] = useState(false);
+  const [descForm, setDescForm] = useState("");
+  const [restaurantForDesc, setRestaurantForDesc] = useState(null);
+
+
   // --- ŁADOWANIE DANYCH (Zawsze ładujemy restauracje i zamówienia, żeby widzieć liczniki) ---
   useEffect(() => {
     if (hasAccess) {
@@ -243,7 +250,47 @@ const Dashboard = () => {
     } finally {
         setLoadingReviews(false);
     }
-};
+  };
+
+  const handleSaveDescription = async (e) => {
+    e.preventDefault();
+    if (!restaurantForDesc) return;
+
+    try {
+        const res = await fetch(
+        `http://127.0.0.1:8000/restaurants/${restaurantForDesc.id}`,
+        {
+            method: "PUT",
+            headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ description: descForm })
+        }
+        );
+
+        if (!res.ok) throw new Error("Błąd zapisu opisu");
+
+        const updated = await res.json();
+
+        // aktualizacja restauracji w stanie
+        setRestaurants(prev =>
+        prev.map(r => r.id === updated.id ? updated : r)
+        );
+
+        // jeśli aktualnie wybrana
+        if (selectedRestaurant?.id === updated.id) {
+        setSelectedRestaurant(updated);
+        }
+
+        setIsDescModalOpen(false);
+        setDescForm("");
+        setRestaurantForDesc(null);
+    } catch (err) {
+        alert(err.message);
+    }
+  };
+
     
 
   return (
@@ -297,9 +344,34 @@ const Dashboard = () => {
                                     <h3 className="font-bold truncate">{r.name}</h3>
                                     {getStatusBadge(r.status)}
                                 </div>
-                                <button onClick={(e) => handleRemoveRestaurant(e, r.id)} className="text-red-500 hover:bg-red-100 p-2 rounded-full">🗑️</button>
+                                {/* AKCJE */}
+                                <div className="flex gap-1">
+                                    {/* USUŃ */}
+                                    <button
+                                    onClick={(e) => handleRemoveRestaurant(e, r.id)}
+                                    className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 p-2 rounded-full transition"
+                                    title="Usuń lokal"
+                                    >
+                                    🗑️
+                                    </button>
+
+                                    {/* EDYTUJ OPIS */}
+                                    <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRestaurantForDesc(r);
+                                        setDescForm(r.description || "");
+                                        setIsDescModalOpen(true);
+                                    }}
+                                    className="text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-full transition"
+                                    title="Edytuj opis"
+                                    >
+                                    ✏️
+                                    </button>
+                                </div>
                             </div>
-                        ))}
+                        ))
+                        }
                     </div>
                 </div>
 
@@ -597,6 +669,35 @@ const Dashboard = () => {
             <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded">Dodaj</button>
         </form>
       </Modal>
+      
+      <Modal isOpen={isDescModalOpen} onClose={() => setIsDescModalOpen(false)} title="Edytuj opis restauracji">
+        <form onSubmit={handleSaveDescription} className="space-y-4">
+            <textarea
+            value={descForm}
+            onChange={(e) => setDescForm(e.target.value)}
+            rows={5}
+            placeholder="Wpisz opis restauracji..."
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            />
+            <div className="flex justify-end gap-3">
+            <button
+                type="button"
+                onClick={() => setIsDescModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+            >
+                Anuluj
+            </button>
+            <button
+                type="submit"
+                disabled={savingDesc}
+                className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+            >
+                {savingDesc ? "Zapisywanie..." : "Zapisz"}
+            </button>
+            </div>
+        </form>
+      </Modal>
+
 
     </div>
   );

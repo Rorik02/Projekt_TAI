@@ -140,21 +140,29 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
                             : "border-gray-100 dark:border-gray-700"
                         }`}
                     >
+                         {/* NAWIERZCHNIA: NAZWA + RATING */}
                         <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-purple-600 transition">
-                                    {restaurant.name}
-                                </h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                    📍 {restaurant.street} {restaurant.number}, {restaurant.city}
-                                </p>
-                            </div>
-                            <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg">
-                                {restaurant.rating} ⭐
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white break-words">
+                            {restaurant.name}
+                            </h3>
+                            <span className="flex-shrink-0 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-lg">
+                            {restaurant.rating} ⭐
                             </span>
+                        </div>
+
+                        {/* POD NAGŁÓWKIEM: kuchnia + opis + adres */}
+                        <div className="mt-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}
+                            </p>
+                            {restaurant.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 break-words">
+                                {restaurant.description}
+                            </p>
+                            )}
+                            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                            📍 {restaurant.street} {restaurant.number}, {restaurant.city}
+                            </p>
                         </div>
 
                         <div className="flex gap-2 mt-3">
