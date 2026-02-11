@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Kategorie do listy rozwijanej w edycji
 const RESTAURANT_CATEGORIES = [
   "Italian", "Japanese", "American", "Chinese", "Mexican",
   "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
@@ -14,12 +13,10 @@ const AdminRestaurants = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtry
   const [searchTerm, setSearchTerm] = useState("");
   const [cuisineFilter, setCuisineFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
 
-  // Modal Edycji
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRest, setCurrentRest] = useState(null);
   const [formData, setFormData] = useState({
@@ -31,7 +28,6 @@ const AdminRestaurants = () => {
       rating: 5.0
   });
 
-  // 1. POBIERANIE WSZYSTKICH RESTAURACJI
   const fetchRestaurants = async () => {
     setLoading(true);
     try {
@@ -52,7 +48,6 @@ const AdminRestaurants = () => {
     fetchRestaurants();
   }, []);
 
-  // --- OBSŁUGA MODALA EDYCJI ---
   const openEditModal = (restaurant) => {
     setCurrentRest(restaurant);
     setFormData({
@@ -94,7 +89,6 @@ const AdminRestaurants = () => {
     }
   };
 
-  // --- USUWANIE ---
   const handleDelete = async (id) => {
     if(!window.confirm("Czy na pewno chcesz usunąć tę restaurację? Ta operacja jest nieodwracalna.")) return;
 
@@ -114,12 +108,9 @@ const AdminRestaurants = () => {
     }
   };
 
-  // --- FILTROWANIE (Zmienione) ---
   const filteredRestaurants = restaurants.filter(r => {
-    // 1. Warunek: Nie pokazuj odrzuconych
     if (r.status === 'rejected') return false;
 
-    // 2. Reszta filtrów
     const term = searchTerm.toLowerCase();
     const matchesSearch = r.name.toLowerCase().includes(term);
     const matchesCuisine = cuisineFilter === "all" || r.cuisines.includes(cuisineFilter);

@@ -7,7 +7,6 @@ const CuisineList = () => {
   const [selectedCuisine, setSelectedCuisine] = useState(null);
   const [loading, setLoading] = useState(false);
   
-  // Nowe stany dla MenuModal
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuProducts, setMenuProducts] = useState([]);
   const [menuRestaurant, setMenuRestaurant] = useState(null);
@@ -42,7 +41,6 @@ const CuisineList = () => {
     setLoading(false);
   };
 
-  // --- NOWA FUNKCJA: Otwieranie menu z pobieraniem produktów ---
   const handleOpenMenu = async (restaurant) => {
     setMenuRestaurant(restaurant);
     setMenuProducts([]); 
@@ -62,7 +60,7 @@ const CuisineList = () => {
   const handleCuisineClick = (cuisine) => {
     const newCuisine = selectedCuisine === cuisine ? null : cuisine;
     setSelectedCuisine(newCuisine);
-    setIsMenuOpen(false); // Zamknij menu przy zmianie kuchni
+    setIsMenuOpen(false);
     fetchRestaurants(newCuisine);
   };
 

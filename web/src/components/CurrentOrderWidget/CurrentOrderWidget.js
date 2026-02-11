@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
-import { useLocation } from 'react-router-dom'; // Import do sprawdzania, na jakiej jesteś stronie
+import { useLocation } from 'react-router-dom';
 
 const STATUS_STEPS = [
     { key: 'confirmed', label: 'Przyjęto', icon: '📝' },
@@ -10,32 +10,24 @@ const STATUS_STEPS = [
 ];
 
 const CurrentOrderWidget = () => {
-    const { activeOrder, clearActiveOrder } = useCart(); // Zakładam, że możesz dodać clearActiveOrder w Context, lub po prostu użyć setActiveOrder(null) jeśli udostępnisz setter
+    const { activeOrder, clearActiveOrder } = useCart();
     const [isExpanded, setIsExpanded] = useState(true);
     const location = useLocation();
 
-    // 1. ZABEZPIECZENIE: Jeśli nie ma zamówienia -> nic nie renderuj
     if (!activeOrder) return null;
 
-    // 2. LOGIKA UKRYWANIA:
-    // Ukryj, jeśli status to 'completed' (zakończone) lub 'cancelled' (anulowane)
     if (activeOrder.status === 'completed' || activeOrder.status === 'cancelled') {
         return null;
     }
 
-    // 3. LOGIKA DLA PANELU WŁAŚCICIELA/ADMINA:
-    // Jeśli użytkownik jest na dashboardzie lub w adminie, ukryj widget, żeby nie przeszkadzał
     if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin')) {
         return null;
     }
 
-    // Ustalanie obecnego etapu
-    // Jeśli status jest inny niż w liście (np. pending), domyślnie pokazujemy pierwszy krok
     const currentStatus = activeOrder.status || 'confirmed';
     const currentIndex = STATUS_STEPS.findIndex(s => s.key === currentStatus);
     const safeIndex = currentIndex === -1 ? 0 : currentIndex;
 
-    // Formatowanie listy produktów (skrócone)
     const itemsSummary = activeOrder.items 
         ? activeOrder.items.map(i => i.name).join(", ") 
         : "Szczegóły w zamówieniu";

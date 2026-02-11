@@ -6,14 +6,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'foodapp.db')}"
 
 engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}  # wymagane dla SQLite
+    DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# sesja DB dla endpointów
 def get_db():
     db = SessionLocal()
     try:

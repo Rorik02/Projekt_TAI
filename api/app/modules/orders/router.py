@@ -16,12 +16,6 @@ from .schemas import ReviewCreate, ReorderRequest
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-
-# ==========================================
-# ENDPOINTY ZAMÓWIEŃ
-# ==========================================
-
 @router.post("/", response_model=schemas.OrderResponse)
 def create_order(
     order_data: schemas.OrderCreate, 
@@ -91,9 +85,6 @@ def create_order(
         "restaurant_address": f"{restaurant.street} {restaurant.number}, {restaurant.city}"
     }
 
-# ------------------------------------------
-# Pobierz historię zamówień klienta
-# ------------------------------------------
 @router.get("/my-orders", response_model=List[schemas.OrderResponse])
 def get_my_orders(
     db: Session = Depends(get_db), 

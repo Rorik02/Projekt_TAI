@@ -6,25 +6,21 @@ from contextlib import asynccontextmanager
 from app.db.database import Base, engine, SessionLocal
 from app.core.security import hash_password
 
-# --- IMPORTY MODUŁÓW (POPRAWIONE ŚCIEŻKI) ---
 from app.modules.users.router import router as users_router
 from app.modules.users import models 
 
 from app.modules.restaurants.router import router as restaurants_router
 from app.modules.restaurants import models as restaurant_models
 
-# <--- POPRAWKA: Dodano "app." na początku
 from app.modules.orders import router as orders_router
 from app.modules.orders import models as order_models 
 
 print(">>> MAIN FILE:", os.path.abspath(__file__))
 print(">>> DB PATH:", os.path.abspath("app/db/foodapp.db"))
 
-# Tworzenie tabel w bazie SQLite
-# SQLAlchemy potrzebuje zaimportowanych modeli, żeby wiedzieć co utworzyć
 Base.metadata.create_all(bind=engine)
 restaurant_models.Base.metadata.create_all(bind=engine)
-order_models.Base.metadata.create_all(bind=engine) # <--- POPRAWKA: Tworzymy tabele zamówień
+order_models.Base.metadata.create_all(bind=engine)
 
 def create_default_admin():
     db = SessionLocal()
@@ -73,17 +69,13 @@ app = FastAPI(lifespan=lifespan)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adres twojego frontendu
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Podpięcie routerów
 app.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(restaurants_router, prefix="/restaurants", tags=["Restaurants"])
 
-# <--- POPRAWKA: orders_router to moduł, w środku ma obiekt 'router'
 app.include_router(orders_router.router, prefix="/orders", tags=["orders"])
-#app.include_router(orders_router.router, prefix="/orders", tags=["orders"])

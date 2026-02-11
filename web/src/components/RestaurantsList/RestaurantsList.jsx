@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MenuModal from '../MenuModal/MenuModal';
 import ReviewsModal from "../ReviewsModal/ReviewsModal";
 
@@ -7,9 +7,8 @@ const CATEGORIES = [
     "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
 ];
 
-const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMenu }) => {
+const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMenu, onFilterChange }) => {
 
-    // --- STANY MODALI ---
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuProducts, setMenuProducts] = useState([]);
     const [menuRestaurant, setMenuRestaurant] = useState(null);
@@ -19,11 +18,10 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
     const [restaurantReviews, setRestaurantReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
 
-    // --- STANY FILTRÓW ---
     const [minRating, setMinRating] = useState(0);
     const [selectedCuisine, setSelectedCuisine] = useState("Wszystkie");
+    const [cityFilter, setCityFilter] = useState(""); 
 
-    // --- OTWIERANIE MODALA MENU ---
     const handleOpenMenu = async (restaurant) => {
         setMenuRestaurant(restaurant);
         setMenuProducts([]);
@@ -41,7 +39,6 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
         }
     };
 
-    // --- OTWIERANIE MODALA RECENZJI ---
     const handleOpenReviews = async (restaurant) => {
         setReviewsRestaurant(restaurant);
         setRestaurantReviews([]);
@@ -61,15 +58,25 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
         }
     };
 
-    // --- FILTROWANIE RESTAURACJI ---
     const filteredRestaurants = restaurants.filter(r => {
         if (r.rating < minRating) return false;
         if (selectedCuisine !== "Wszystkie") {
             const cuisinesData = Array.isArray(r.cuisines) ? r.cuisines.join(" ") : r.cuisines || "";
             if (!cuisinesData.toLowerCase().includes(selectedCuisine.toLowerCase())) return false;
         }
+        if (cityFilter.trim() !== "") {
+            if (!r.city || !r.city.toLowerCase().includes(cityFilter.toLowerCase().trim())) {
+                return false;
+            }
+        }
         return true;
     });
+
+    useEffect(() => {
+        if (onFilterChange) {
+            onFilterChange(filteredRestaurants);
+        }
+    }, [minRating, selectedCuisine, cityFilter, restaurants]);
 
     return (
         <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
@@ -98,11 +105,22 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
                 
                 <div className="flex flex-col gap-3">
                     <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Miasto</label>
+                        <input
+                            type="text"
+                            placeholder="Wpisz miasto (np. Gliwice)"
+                            value={cityFilter}
+                            onChange={(e) => setCityFilter(e.target.value)}
+                            className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none dark:text-white"
+                        />
+                    </div>
+
+                    <div>
                         <label className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Rodzaj Kuchni</label>
                         <select
                             value={selectedCuisine}
                             onChange={(e) => setSelectedCuisine(e.target.value)}
-                            className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
+                            className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none dark:text-white"
                         >
                             {CATEGORIES.map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
@@ -115,7 +133,7 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
                         <select
                             value={minRating}
                             onChange={(e) => setMinRating(Number(e.target.value))}
-                            className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 dark:text-white"
+                            className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-700 border-none rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none dark:text-white"
                         >
                             <option value={0}>Wszystkie</option>
                             <option value={3}>3.0+ ⭐</option>
@@ -129,7 +147,7 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
             {/* LISTA RESTAURACJI */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {filteredRestaurants.length === 0 ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 mt-10">Brak wyników.</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 mt-10">Brak wyników dla podanych filtrów.</p>
                 ) : filteredRestaurants.map((restaurant) => (
                     <div 
                         key={restaurant.id} 
@@ -140,7 +158,6 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
                             : "border-gray-100 dark:border-gray-700"
                         }`}
                     >
-                         {/* NAWIERZCHNIA: NAZWA + RATING */}
                         <div className="flex justify-between items-start">
                             <h3 className="text-lg font-bold text-gray-800 dark:text-white break-words">
                             {restaurant.name}
@@ -150,7 +167,6 @@ const RestaurantsList = ({ restaurants, onSelectRestaurant, selectedId, onShowMe
                             </span>
                         </div>
 
-                        {/* POD NAGŁÓWKIEM: kuchnia + opis + adres */}
                         <div className="mt-2">
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                             {Array.isArray(restaurant.cuisines) ? restaurant.cuisines.join(", ") : restaurant.cuisines}

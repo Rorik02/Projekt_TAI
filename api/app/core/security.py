@@ -12,15 +12,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-# --- POPRAWIONA FUNKCJA ---
-# Dodano argument expires_delta: Optional[timedelta] = None
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        # Domyślny czas wygasania (jeśli nie podano) to 15 minut
         expire = datetime.utcnow() + timedelta(minutes=15)
         
     to_encode.update({"exp": expire})

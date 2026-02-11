@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 
-// --- IMPORTY ZDJĘĆ ---
-// Upewnij się, że pliki są w folderze src/assets/images/
+
 import blikImg from '../../assets/blik.png';
 import cardImg from '../../assets/karta.png';
 
@@ -12,44 +11,36 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     const { cartItems, cartRestaurant, cartTotal, removeFromCart, clearCart } = useCart();
     const token = localStorage.getItem("access_token");
 
-    // --- STANY PROCESU ---
     const [step, setStep] = useState(1);
     const [allAddresses, setAllAddresses] = useState([]);
 
-    // --- DANE FORMULARZA ---
     const [remarks, setRemarks] = useState("");
     const [deliveryType, setDeliveryType] = useState("ASAP");
     const [selectedTime, setSelectedTime] = useState("");
 
-    // Adres
     const [selectedAddressId, setSelectedAddressId] = useState("");
     const [newAddress, setNewAddress] = useState({ city: "", street: "", number: "" });
 
-    // --- PŁATNOŚĆ ---
     const [paymentMethod, setPaymentMethod] = useState("blik");
     const [blikCode, setBlikCode] = useState("");
     const [cardData, setCardData] = useState({ number: "", date: "", cvc: "" });
 
-    // --- DOKUMENT ZAKUPU ---
-    const [documentType, setDocumentType] = useState("receipt"); // 'receipt' lub 'invoice'
+    const [documentType, setDocumentType] = useState("receipt");
     const [nip, setNip] = useState("");
 
     const [orderData, setOrderData] = useState(null);
     const [showDocument, setShowDocument] = useState(false);
 
-
-    // --- FORMATOWANIE KARTY (spacja co 4 cyfry) ---
     const handleCardNumberChange = (e) => {
-        let value = e.target.value.replace(/\D/g, ''); // Tylko cyfry
+        let value = e.target.value.replace(/\D/g, '');
         value = value.substring(0, 16); // Limit 16
         const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
         setCardData({ ...cardData, number: formatted });
     };
 
-    // --- FORMATOWANIE DATY (MM/YY) ---
     const handleCardDateChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
-        value = value.substring(0, 4); // Limit 4 (MMYY)
+        value = value.substring(0, 4);
         if (value.length >= 2) {
             value = value.substring(0, 2) + '/' + value.substring(2, 4);
         }
@@ -60,7 +51,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         try {
             const token = localStorage.getItem("access_token");
 
-            // Przygotuj dane zamówienia zgodnie z naszym schematem
             const orderData = {
                 restaurant_id: cartRestaurant.id,
                 total_amount: cartTotal,
@@ -71,8 +61,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                         const addr = allAddresses.find(a => a.id === selectedAddressId);
                         return addr ? `${addr.street} ${addr.number}, ${addr.city}` : '';
                     })(),
-                delivery_time_type: deliveryType,  // "ASAP" lub "SCHEDULED"
-                document_type: documentType,  // "receipt" lub "invoice"
+                delivery_time_type: deliveryType,
+                document_type: documentType,
                 nip: documentType === 'invoice' ? nip : null,
                 remarks: remarks,
                 items: cartItems.map(item => ({
@@ -111,17 +101,14 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             throw error;
         }
     };
-    // --- POBIERANIE DANYCH ---
     useEffect(() => {
         if (isOpen && token) {
             fetchAllData();
         }
-        // eslint-disable-next-line
     }, [isOpen, token]);
 
     const fetchAllData = async () => {
         try {
-            // 1. Adres domowy z profilu
             const userRes = await fetch("http://127.0.0.1:8000/users/me", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -137,7 +124,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 };
             }
 
-            // 2. Dodatkowe adresy
             const addrRes = await fetch("http://127.0.0.1:8000/users/addresses", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -172,32 +158,19 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    // --- FINALIZACJA ---
     const handlePlaceOrder = async () => {
         try {
             const order = await sendOrderToBackend();
 
-            // Dodaj alert tylko dla informacji
             alert(`🎉 Zamówienie przyjęte!\nNumer: #${order.id}`);
 
-            // Ustaw dane i pokaż dokument
             setOrderData(order);
             setShowDocument(true);
-
-            // NIE zamykaj modalnego okna od razu!
-            // onClose(); // ← ZAKOMENTUJ TĘ LINIĘ
-
-            // NIE czyść też koszyka, aż użytkownik zamknie dokument
-            // clearCart(); // ← ZAKOMENTUJ
-
-            // Reset tylko formularza
-
 
             setStep(1);
             setBlikCode("");
             setCardData({ number: "", date: "", cvc: "" });
             setNip("");
-            //onClose();
         }
         catch (e) {
             alert("❌ Nie udało się złożyć zamówienia");
@@ -205,9 +178,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         }
     };
 
-    // ================= WIDOKI KROKÓW =================
-
-    // --- KROK 1: KOSZYK ---
     const renderStep1 = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white border-b pb-3">1. Co zamawiamy?</h3>
@@ -258,7 +228,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         </div>
     );
 
-    // --- KROK 2: DOSTAWA I PŁATNOŚĆ ---
     const renderStep2 = () => (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white border-b pb-3">2. Gdzie i jak?</h3>
@@ -467,7 +436,6 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         </div>
     );
 
-    // --- KROK 3: PODSUMOWANIE ---
     const renderStep3 = () => {
         let finalAddressString = "";
         if (selectedAddressId === 'new') {
@@ -624,9 +592,9 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                     order={orderData}
                     onClose={() => {
                         setShowDocument(false);
-                        onClose(); // Zamknij główny modal CheckoutModal
+                        onClose();
                     }}
-                    clearCart={clearCart} // Przekaż funkcję czyszczenia koszyka
+                    clearCart={clearCart}
                 />
             )}
 

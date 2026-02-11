@@ -23,26 +23,24 @@ code {
   font-size: 12px;
 }
 
-/* Kontener komunikatu */
 .notification {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);  /* Wyśrodkowanie */
-  background-color: #2e2e2e;  /* Tło komunikatu */
+  transform: translate(-50%, -50%);
+  background-color: #2e2e2e;
   color: white;
   padding: 20px;
   border-radius: 8px;
-  z-index: 1000;  /* Ustala, że komunikat jest na wierzchu */
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);  /* Dodanie cienia dla lepszego efektu */
-  display: none;  /* Domyślnie komunikat jest ukryty */
+  z-index: 1000;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+  display: none;
   font-size: 16px;
   font-weight: 600;
-  min-width: 200px;  /* Minimalna szerokość */
+  min-width: 200px;
   text-align: center;
 }
 
-/* Kiedy pojawi się komunikat (po kliknięciu przycisku lub po akcji) */
 .notification.show {
   display: block;
 }

@@ -13,7 +13,6 @@ from . import models, schemas
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
-# --- Helper (Bez zmian) ---
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -33,10 +32,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-# ==========================
-# ENDPOINTY (Logowanie/Rejestracja BEZ ZMIAN)
-# ==========================
-
 @router.post("/register", response_model=schemas.UserOut)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -51,6 +46,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         phone_number=user.phone_number,
         street=user.street,
+        number=user.number,
         city=user.city,
         postal_code=user.postal_code,
         role="user", 
@@ -82,7 +78,6 @@ def login_user(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
 def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
-# --- ADMIN ---
 
 @router.get("/", response_model=List[schemas.UserOut])
 def get_all_users(db: Session = Depends(get_db)):
@@ -102,9 +97,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "User deleted"}
 
-# ==========================
-# NOWOŚĆ: ENDPOINTY ADRESOWE
-# ==========================
 
 @router.get("/addresses", response_model=List[schemas.UserAddressOut])
 def get_my_addresses(

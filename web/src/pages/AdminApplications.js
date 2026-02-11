@@ -5,7 +5,6 @@ const AdminApplications = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("access_token");
 
-  // Zakładki: 'new' (nowe wnioski) | 'history' (historia)
   const [activeTab, setActiveTab] = useState("new");
 
   const [applications, setApplications] = useState([]);
@@ -14,13 +13,11 @@ const AdminApplications = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // --- STANY MODALA ODRZUCENIA ---
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [rejectingType, setRejectingType] = useState(""); // "restaurant" lub "owner"
+  const [rejectingType, setRejectingType] = useState("");
 
-  // 1. Pobieranie nowych wniosków restauracji
   const fetchNewApplications = async () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/restaurants/applications', {
@@ -39,7 +36,6 @@ const AdminApplications = () => {
     }
   };
 
-  // 2. Pobieranie wniosków restauratora
   const fetchOwnerRequests = async () => {
     try {
       const response = await fetch(
@@ -63,7 +59,6 @@ const AdminApplications = () => {
     }
   };
 
-  // 3. Pobieranie i łączenie wszystkich nowych wniosków
   const fetchAllNewRequests = async () => {
     setLoading(true);
     try {
@@ -72,7 +67,6 @@ const AdminApplications = () => {
         fetchOwnerRequests()
       ]);
       
-      // Łączymy i sortujemy po ID malejąco (najnowsze pierwsze)
       const allRequests = [...restaurantApps, ...ownerApps]
         .sort((a, b) => b.id - a.id);
       
@@ -86,7 +80,6 @@ const AdminApplications = () => {
     }
   };
 
-  // 4. Pobieranie historii restauracji
   const fetchHistory = async () => {
     setLoading(true);
     try {
@@ -115,7 +108,6 @@ const AdminApplications = () => {
     }
   }, [activeTab]);
 
-  // --- AKCJE DLA RESTAURACJI ---
   const handleApproveRestaurant = async (restaurantId) => {
     if (!window.confirm(`Zatwierdzić wniosek restauracji #${restaurantId}?`)) return;
     await sendRestaurantStatusUpdate(restaurantId, "approved", null);
@@ -143,11 +135,9 @@ const AdminApplications = () => {
       });
 
       if (response.ok) {
-        // Usuwamy z listy combinedRequests
         setCombinedRequests(prev => prev.filter(req => 
           !(req.type === "restaurant" && req.id === id)
         ));
-        // Usuwamy też z osobnej listy applications
         setApplications(prev => prev.filter(app => app.id !== id));
         alert(`Pomyślnie zmieniono status wniosku restauracji #${id} na: ${status === 'approved' ? 'ZATWIERDZONY' : 'ODRZUCONY'}`);
       } else {
@@ -159,7 +149,6 @@ const AdminApplications = () => {
     }
   };
 
-  // --- AKCJE DLA RESTAURATORA ---
   const decideOwner = async (userId, approve) => {
     try {
       const response = await fetch(
@@ -174,11 +163,9 @@ const AdminApplications = () => {
 
       if (!response.ok) throw new Error("Błąd decyzji");
 
-      // Usuwamy z listy combinedRequests
       setCombinedRequests(prev => prev.filter(req => 
         !(req.type === "owner" && req.id === userId)
       ));
-      // Usuwamy też z osobnej listy ownerRequests
       setOwnerRequests(prev => prev.filter(user => user.id !== userId));
       
       alert(
@@ -214,7 +201,6 @@ const AdminApplications = () => {
     setIsRejectModalOpen(false);
   };
 
-  // --- FUNKCJE POMOCNICZE ---
   const getTypeBadge = (type) => {
     switch(type) {
       case "restaurant":

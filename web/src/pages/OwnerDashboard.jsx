@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Modal from "../components/Modal/Modal";
 import { useNavigate } from "react-router-dom";
 
-// Kategorie kuchni i menu (bez zmian)
 const RESTAURANT_CATEGORIES = [
   "Italian", "Japanese", "American", "Chinese", "Mexican",
   "Indian", "French", "Mediterranean", "Thai", "Fast Food", "Vegetarian", "Polish", "Burger", "Pizza", "Sushi"
@@ -20,29 +19,23 @@ const Dashboard = () => {
   const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";
   const hasAccess = normalizedRole === "właściciel" || normalizedRole === "owner" || normalizedRole === "admin";
 
-  // --- STANY ---
-  const [activeTab, setActiveTab] = useState('restaurants'); // 'restaurants' | 'orders' | 'reviews'
+  const [activeTab, setActiveTab] = useState('restaurants');
 
-  // DANE
   const [restaurants, setRestaurants] = useState([]);
   const [orders, setOrders] = useState([]);
   
-  // SELEKCJA
-  const [selectedRestaurant, setSelectedRestaurant] = useState(null); // Do edycji menu
-  const [selectedRestaurantForOrders, setSelectedRestaurantForOrders] = useState(null); // Do podglądu zamówień
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [selectedRestaurantForOrders, setSelectedRestaurantForOrders] = useState(null);
   
-  // Opinie
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [selectedRestaurantForReviews, setSelectedRestaurantForReviews] = useState(null);
 
 
-  // Loadingi
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Modale i Formularze (bez zmian)
   const [isRestModalOpen, setIsRestModalOpen] = useState(false);
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
   const [restForm, setRestForm] = useState({ 
@@ -53,23 +46,19 @@ const Dashboard = () => {
       name: "", price: "", category: MENU_CATEGORIES[2] 
   });
 
-  // Description
   const [isDescModalOpen, setIsDescModalOpen] = useState(false);
   const [savingDesc, setSavingDesc] = useState(false);
   const [descForm, setDescForm] = useState("");
   const [restaurantForDesc, setRestaurantForDesc] = useState(null);
 
 
-  // --- ŁADOWANIE DANYCH (Zawsze ładujemy restauracje i zamówienia, żeby widzieć liczniki) ---
   useEffect(() => {
     if (hasAccess) {
         loadRestaurants();
         fetchOrders();
     }
-    // eslint-disable-next-line
   }, [hasAccess]);
 
-  // --- ŁADOWANIE RECENZJI PO PRZEŁĄCZENIU ZAKŁADKI ---
   useEffect(() => {
     if (activeTab === 'reviews') loadReviews();
   }, [activeTab]);
@@ -99,39 +88,32 @@ const Dashboard = () => {
     finally { setLoadingOrders(false); }
   };
 
-  // --- LOGIKA LICZNIKÓW ---
   const getNewOrdersCount = (restaurantId) => {
-      // Liczymy zamówienia o statusie 'confirmed' (czyli nowe, nieprzyjęte jeszcze do kuchni)
       return orders.filter(o => o.restaurant_id === restaurantId && o.status === 'confirmed').length;
   };
 
-  // --- ZMIANA STATUSU ZAMÓWIENIA ---
   const handleStatusChange = async (orderId, newStatus) => {
   try {
-    // Optymistyczna aktualizacja w UI
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
 
-    // Wyślij do backendu
     const res = await fetch(`http://127.0.0.1:8000/orders/${orderId}/status`, {
       method: "PATCH",
       headers: { 
         "Content-Type": "application/json", 
         "Authorization": `Bearer ${token}` 
       },
-      body: JSON.stringify({ new_status: newStatus }) // <-- zmiana nazwy pola
+      body: JSON.stringify({ new_status: newStatus })
     });
 
     if (!res.ok) throw new Error("Nie udało się zaktualizować statusu w backendzie");
 
   } catch (err) {
     alert(err.message);
-    // rollback w przypadku błędu
     fetchOrders();
   }
 };
 
 
-  // --- OBSŁUGA WYBORU RESTAURACJI (MENU) ---
   const handleSelectRestaurant = async (restaurant) => {
     setSelectedRestaurant(restaurant);
     if (restaurant.status === 'rejected') {
@@ -156,7 +138,6 @@ const Dashboard = () => {
     }
   };
 
-  // --- CRUD RESTAURACJI I PRODUKTÓW (Skrócone, bo to już działało) ---
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
     try {
@@ -175,7 +156,6 @@ const Dashboard = () => {
 
   const handleUpdateRejected = async (e) => {
       e.preventDefault();
-      // ... (Twoja stara logika)
       alert("Funkcja aktualizacji (kod skrócony dla czytelności)");
   };
 
@@ -228,13 +208,11 @@ const Dashboard = () => {
 
   if (!hasAccess) return <div className="p-10 text-center text-white">Brak dostępu.</div>;
 
-  // Filtrowanie zamówień dla wybranej restauracji
   const filteredOrders = selectedRestaurantForOrders 
       ? orders.filter(o => o.restaurant_id === selectedRestaurantForOrders.id)
       : [];
 
 
-  // Zaladuj opinie
   const loadReviews = async () => {
     setLoadingReviews(true);
     try {
@@ -273,12 +251,10 @@ const Dashboard = () => {
 
         const updated = await res.json();
 
-        // aktualizacja restauracji w stanie
         setRestaurants(prev =>
         prev.map(r => r.id === updated.id ? updated : r)
         );
 
-        // jeśli aktualnie wybrana
         if (selectedRestaurant?.id === updated.id) {
         setSelectedRestaurant(updated);
         }

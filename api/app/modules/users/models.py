@@ -15,34 +15,28 @@ class User(Base):
     
     role_request = Column(String, nullable=True)  
 
-    # Adres Główny
     street = Column(String)
+    number = Column(String)
     city = Column(String)
     postal_code = Column(String)
     
-    # Zgody
     terms_accepted = Column(Boolean, default=False)
     marketing_consent = Column(Boolean, default=False)
     data_processing_consent = Column(Boolean, default=False)
 
-    # Relacje
     restaurants = relationship("app.modules.restaurants.models.Restaurant", back_populates="owner")
     
-    # NOWOŚĆ: Relacja do dodatkowych adresów
     additional_addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
 
-    #relacja z zamówieniami
     orders = relationship("app.modules.orders.models.Order", back_populates="user")
 
 
-# NOWA TABELA
 class UserAddress(Base):
     __tablename__ = "user_addresses"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    
-    name = Column(String) # np. "Praca"
+    name = Column(String)
     city = Column(String)
     street = Column(String)
     number = Column(String)

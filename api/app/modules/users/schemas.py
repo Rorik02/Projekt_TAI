@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
-# --- NOWOŚĆ: SCHEMATY ADRESÓW ---
 class UserAddressBase(BaseModel):
     name: str
     city: str
@@ -18,7 +17,6 @@ class UserAddressOut(UserAddressBase):
     class Config:
         from_attributes = True
 
-# --- SCHEMATY UŻYTKOWNIKA (Bez zmian w logice) ---
 
 class UserBase(BaseModel):
     email: str
@@ -33,6 +31,7 @@ class UserCreate(UserBase):
     last_name: str
     phone_number: str
     street: str
+    number: str
     city: str
     postal_code: str
     terms_accepted: bool
@@ -45,6 +44,7 @@ class UserOut(UserBase):
     last_name: str
     role: str
     street: Optional[str] = None
+    number: Optional[str] = None
     city: Optional[str] = None
     postal_code: Optional[str] = None
     
@@ -58,13 +58,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class UserOut(UserBase):
-    id: int
-    first_name: str
-    last_name: str
-    role: str
-    role_request: Optional[str] = None
-    ...
 
 
 

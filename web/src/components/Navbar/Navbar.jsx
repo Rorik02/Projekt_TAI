@@ -8,10 +8,8 @@ const Navbar = () => {
   const token = localStorage.getItem("access_token");
   const [user, setUser] = useState(null);
 
-  // Pobieramy licznik z koszyka
   const { cartCount } = useCart();
   
-  // Stan do otwierania/zamykania Modala z zamówieniem
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const handleLogout = () => {
@@ -20,7 +18,6 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  // Pobieranie danych użytkownika
   useEffect(() => {
     const fetchUser = async () => {
       if (!token) return;
@@ -31,7 +28,6 @@ const Navbar = () => {
         if (response.ok) {
           const data = await response.json();
           setUser(data);
-          // Aktualizujemy rolę w localStorage dla pewności
           if (data.role) localStorage.setItem("user_role", data.role);
         } else {
           handleLogout(); 
@@ -42,7 +38,6 @@ const Navbar = () => {
     };
 
     fetchUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return (

@@ -2,40 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OrderDocument from "../components/OrderDocument/OrderDocument.jsx";
 
-// --- MOCK DATA (Przykładowa historia zamówień) ---
-const MOCK_HISTORY = [
-    {
-        id: "ORD-1024",
-        date: "2023-10-27 14:30",
-        restaurant: "Pizzeria U Luigiego",
-        restaurantAddress: "Akademicka 18, Gliwice",
-        deliveryAddress: "Dom (ul. Słoneczna 5, Gliwice)",
-        total: 45.00,
-        status: "completed",
-        payment: "BLIK",
-        document: "Paragon",
-        items: [
-            { name: "Pizza Margherita", qty: 1, price: 30 },
-            { name: "Cola Zero", qty: 2, price: 7.50 }
-        ]
-    },
-    {
-        id: "ORD-1023",
-        date: "2023-10-26 19:15",
-        restaurant: "Sushi Master",
-        restaurantAddress: "Rynek 12, Katowice",
-        deliveryAddress: "Praca (ul. Korfantego 1, Katowice)",
-        total: 120.00,
-        status: "completed",
-        payment: "Karta",
-        document: "Faktura VAT",
-        items: [
-            { name: "Zestaw Premium", qty: 1, price: 120 }
-        ]
-    }
-];
-
-// Konfiguracja wyglądu statusów
 const STATUS_CONFIG = {
     pending: { label: "Oczekujące", color: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300", icon: "⏳" },
     confirmed: { label: "Potwierdzone", color: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300", icon: "✅" },
@@ -81,18 +47,12 @@ const OrdersPage = () => {
             }
 
             const data = await response.json();
-            console.log("Pobrane zamówienia:", data);
             setOrders(data);
+            setError(null);
         } catch (err) {
             console.error("Błąd pobierania zamówień:", err);
             setError(err.message);
-
-            // Fallback na mock data
-            if (err.message.includes("404") || err.message.includes("500")) {
-                console.log("Używam danych przykładowych");
-                setOrders(MOCK_HISTORY);
-                setError(null);
-            }
+            setOrders([]); 
         } finally {
             setLoading(false);
         }
@@ -267,11 +227,8 @@ const OrdersPage = () => {
         );
     }
 
-    const displayOrders = orders.length > 0 ? orders : MOCK_HISTORY;
-
-    // --- PODZIAŁ NA OBECNE I HISTORYCZNE ---
-    const currentOrders = displayOrders.filter(o => !['delivered', 'completed'].includes(o.status));
-    const pastOrders = displayOrders.filter(o => ['delivered', 'completed'].includes(o.status));
+    const currentOrders = orders.filter(o => !['delivered', 'completed'].includes(o.status));
+    const pastOrders = orders.filter(o => ['delivered', 'completed'].includes(o.status));
 
     const renderOrderCard = (order) => {
         const status = getStatusConfig(order.status || 'completed');
@@ -313,27 +270,32 @@ const OrdersPage = () => {
                     
                     <div className="flex gap-4">
                         <div className="text-right">
-                            <div className="text-xs text-gray-500 uppercase font-bold">Płatność</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">Płatność</div>
                             <div className="text-gray-800 dark:text-gray-300 font-medium">
                                 {paymentMethod === 'blik' ? '📱 BLIK' : '💳 Karta'}
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-xs text-gray-500 uppercase font-bold">Dokument</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">Dokument</div>
                             <div className="text-gray-800 dark:text-gray-300 font-medium">
                                 {documentType === 'invoice' ? 'Faktura VAT' : 'Paragon'}
                             </div>
                         </div>
                         <div className="text-right pl-4 border-l dark:border-gray-700">
-                            <div className="text-xs text-gray-500 uppercase font-bold">Kwota</div>
-                            <div className="text-purple-600 font-bold text-lg">{total.toFixed(2)} zł</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">Kwota</div>
+                            <div className="text-purple-600 font-bold text-lg">{total ? total.toFixed(2) : "0.00"} zł</div>
                         </div>
                     </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-900/50 p-4 flex justify-end items-center gap-3">
                     {order.status === "delivered" && !order.reviewed && (
-                        <button onClick={() => openReviewModal(order)}>⭐ Oceń restaurację</button>
+                        <button 
+                            onClick={() => openReviewModal(order)}
+                            className="text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition"
+                        >
+                            ⭐ Oceń restaurację
+                        </button>
                     )}
 
                     {order.status === "delivery" && (
@@ -369,7 +331,6 @@ const OrdersPage = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 pt-20">
             <div className="max-w-4xl mx-auto space-y-12">
 
-                {/* --- OBECNE ZAMÓWIENIA --- */}
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
                         🛒 Obecne zamówienia
@@ -383,7 +344,6 @@ const OrdersPage = () => {
                     )}
                 </div>
 
-                {/* --- HISTORIA ZAMÓWIEŃ --- */}
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
                         📜 Historia zamówień
@@ -414,7 +374,7 @@ const OrdersPage = () => {
             {reviewOrder && showReviewModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">
+                        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
                             ⭐ Oceń {reviewOrder.restaurant_name || reviewOrder.restaurant}
                         </h2>
 
@@ -427,19 +387,22 @@ const OrdersPage = () => {
                         </div>
 
                         <textarea
-                            className="w-full border rounded-lg p-2 mb-4 dark:bg-gray-700"
+                            className="w-full border rounded-lg p-2 mb-4 dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:border-purple-500"
                             placeholder="Opcjonalny komentarz…"
                             value={comment}
                             onChange={e => setComment(e.target.value)}
                         />
 
                         <div className="flex justify-end gap-3">
-                            <button onClick={closeReviewModal} className="px-4 py-2">
+                            <button 
+                                onClick={closeReviewModal} 
+                                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                            >
                                 Anuluj
                             </button>
                             <button
                                 onClick={submitReview}
-                                className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+                                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
                             >
                                 Wyślij opinię
                             </button>

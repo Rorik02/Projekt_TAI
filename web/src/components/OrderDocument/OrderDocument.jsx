@@ -4,15 +4,12 @@ const OrderDocument = ({ order, onClose, clearCart }) => {
   if (!order) return null;
 
   const handlePrint = () => {
-    // Tworzymy nowe okno/wartości do druku
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      // Jeśli okno się nie otworzy (blokada popup), używamy standardowego druku
       window.print();
       return;
     }
 
-    // Przygotowujemy HTML do druku
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -201,7 +198,6 @@ const OrderDocument = ({ order, onClose, clearCart }) => {
     printWindow.document.write(printContent);
     printWindow.document.close();
     
-    // Czekamy aż zawartość się załaduje i drukujemy
     printWindow.onload = function() {
       printWindow.focus();
       printWindow.print();

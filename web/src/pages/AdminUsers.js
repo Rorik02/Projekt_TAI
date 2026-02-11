@@ -11,16 +11,14 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
 
-  // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState("user");
 
   const navigate = useNavigate();
 
-  // 1. POBIERANIE DANYCH (Teraz używane też przez przycisk Odśwież)
   const fetchUsers = async () => {
-    setLoading(true); // Włączamy loader na chwilę
+    setLoading(true);
     try {
       const response = await fetch('http://127.0.0.1:8000/users/');
       if (!response.ok) throw new Error("Błąd pobierania");
@@ -37,7 +35,6 @@ const AdminUsers = () => {
     fetchUsers();
   }, []);
 
-  // --- LOGIKA MODALA (Bez zmian) ---
   const openRoleModal = (user) => {
     setCurrentUser(user);
     setSelectedRole(user.role);
@@ -83,7 +80,6 @@ const AdminUsers = () => {
     }
   };
 
-  // Filtrowanie (Bez zmian)
   const filteredUsers = users.filter(user => {
     const term = searchTerm.toLowerCase();
     const fullName = (user.first_name + " " + user.last_name).toLowerCase();

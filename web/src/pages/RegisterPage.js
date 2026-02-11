@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  // Stan formularza
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -13,13 +13,14 @@ export default function RegisterPage() {
     prefix: "+48",
     password: "",
     confirm_password: "",
-    role: "user", // WAŻNE: Musi być 'user', żeby system to rozpoznał
+    role: "user",
     street: "",
+    number: "",
     city: "",
     postal_code: "",
-    terms_accepted: true,         // Domyślnie zaakceptowane (wymagane)
+    terms_accepted: true,        
     marketing_consent: false,
-    data_processing_consent: true // Domyślnie zaakceptowane (wymagane)
+    data_processing_consent: true 
   });
 
   const [emailValid, setEmailValid] = useState(null);
@@ -27,25 +28,25 @@ export default function RegisterPage() {
   const [passwordError, setPasswordError] = useState(null);
   const [responseMessage, setResponseMessage] = useState(null);
 
-  // REGEX-y
+  
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // Regex: min 9 znaków, duża litera, cyfra, znak specjalny
+  
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{9,}$/;
 
   function handleChange(e) {
     const { name, value } = e.target;
 
-    // Aktualizujemy stan lokalnie do weryfikacji
+   
     const updatedForm = { ...form, [name]: value };
     setForm(updatedForm);
 
-    // Walidacja w czasie rzeczywistym
+
     if (name === "email") {
       setEmailValid(emailRegex.test(value));
     }
 
     if (name === "phone_number") {
-      setPhoneValid(value.length >= 9); // Zmienione na >= 9 dla bezpieczeństwa
+      setPhoneValid(value.length >= 9); 
     }
 
     if (name === "password" || name === "confirm_password") {
@@ -64,7 +65,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    console.log(">>> Rozpoczynam wysyłanie formularza..."); // DIAGNOSTYKA
+    console.log(">>> Rozpoczynam wysyłanie formularza...");
 
     if (!emailValid) {
       setResponseMessage("Niepoprawny adres email.");
@@ -83,29 +84,26 @@ export default function RegisterPage() {
 
     const payload = {
       ...form,
-      // Backend oczekuje roli "user", a nie "Klient" (chyba że zmieniłeś to w Pythonie)
       role: "user", 
       phone_number: `${form.prefix} ${form.phone_number}`,
     };
 
-    console.log(">>> Wysyłam dane:", payload); // Zobaczysz w konsoli co leci do bazy
+    console.log(">>> Wysyłam dane:", payload);
 
     try {
-      // POPRAWIONY ADRES URL (bez słowa "register" na końcu)
       const res = await fetch("http://127.0.0.1:8000/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      console.log(">>> Status odpowiedzi:", res.status); // Zobaczysz czy to 200, 404 czy 500
+      console.log(">>> Status odpowiedzi:", res.status);
 
       if (!res.ok) {
         const err = await res.json();
         console.error(">>> Błąd z backendu:", err);
         
         if (err.detail) {
-           // Czasami detail to string, czasami lista błędów
            if (typeof err.detail === 'string') {
                setResponseMessage(err.detail);
            } else {
@@ -117,11 +115,10 @@ export default function RegisterPage() {
         return;
       }
 
-      // SUKCES
       console.log(">>> Sukces! Przekierowuję...");
       setResponseMessage(null);
-      alert("Konto utworzone pomyślnie!"); // Dodatkowy alert dla pewności
-      navigate("/login"); // Przekierowanie do logowania (zamiast restaurants)
+      alert("Konto utworzone pomyślnie!");
+      navigate("/login");
 
     } catch (error) {
       console.error(">>> Błąd sieci:", error);
@@ -230,14 +227,30 @@ export default function RegisterPage() {
           )}
 
           {/* ADRES */}
-          <input
-            className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
-            type="text"
-            name="street"
-            placeholder="Ulica i numer"
-            onChange={handleChange}
-            required
-          />
+          <div className="grid grid-cols-3 gap-4">
+             {/* ULICA */}
+             <div className="col-span-2">
+                <input
+                  className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                  type="text"
+                  name="street"
+                  placeholder="Ulica"
+                  onChange={handleChange}
+                  required
+                />
+             </div>
+             {/* NUMER DOMU */}
+             <div className="col-span-1">
+                <input
+                  className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"
+                  type="text"
+                  name="number"
+                  placeholder="Nr"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
           <div className="grid grid-cols-2 gap-4">
             <input
                 className="p-3 rounded bg-gray-700 border border-gray-600 focus:border-purple-500 outline-none w-full"

@@ -2,20 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Upewnij się, że masz tu SWÓJ DŁUGI token
 const MAPBOX_TOKEN = "pk.eyJ1Ijoicm9yaWsiLCJhIjoiY21qN3JvaDh5MDV4cDNncXpkM3RlNmVzZCJ9.HemoDNLmVXXnG2OTEb3H7g";
 
 const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect, onShowMenu }) => {
     const [popupInfo, setPopupInfo] = useState(null);
 
-    // Stan widoku mapy
     const [viewState, setViewState] = useState({
         longitude: 18.6714,
         latitude: 50.2945,
         zoom: 14 
     });
 
-    // EFEKT: Gdy zmieni się selectedRestaurant, aktualizujemy viewState (kamera leci)
     useEffect(() => {
         if (selectedRestaurant && selectedRestaurant.latitude && selectedRestaurant.longitude) {
             setViewState(prev => ({
@@ -23,7 +20,7 @@ const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect, onShowMe
                 longitude: selectedRestaurant.longitude,
                 latitude: selectedRestaurant.latitude,
                 zoom: 15,
-                transitionDuration: 1000 // Czas lotu w ms
+                transitionDuration: 1000
             }));
             setPopupInfo(selectedRestaurant);
         }
@@ -99,9 +96,8 @@ const MapComponent = ({ restaurants = [], selectedRestaurant, onSelect, onShowMe
                                 {popupInfo.street} {popupInfo.number}, {popupInfo.city}
                             </p>
                             
-                            {/* --- ZAKTUALIZOWANY PRZYCISK --- */}
                             <button 
-                                onClick={() => onShowMenu(popupInfo)} // <--- TU ZMIANA
+                                onClick={() => onShowMenu(popupInfo)}
                                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-full transition-colors w-full shadow-md"
                             >
                                 Zobacz Menu 🍽️

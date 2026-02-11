@@ -13,7 +13,7 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("users.id")) 
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     
-    # Status zamówienia – teraz zmiany będą zapisywane w bazie
+    # Status zamówienia
     status = Column(String, default="confirmed")  
     
     total_amount = Column(Float)
@@ -52,7 +52,7 @@ class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True)
-    rating = Column(Integer, nullable=False)  # 1–5
+    rating = Column(Integer, nullable=False)
     comment = Column(String, nullable=True)
 
     user_id = Column(Integer, ForeignKey("users.id"))

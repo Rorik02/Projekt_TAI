@@ -1,13 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
 
-// --- KONTEKST KOSZYKA ---
 import { CartProvider } from "./context/CartContext";
 
-// --- WIDŻET AKTYWNEGO ZAMÓWIENIA (PŁYWAJĄCY PANEL) ---
 import CurrentOrderWidget from "./components/CurrentOrderWidget/CurrentOrderWidget";
 
-// --- STRONY ---
 import HomePage from "./pages/HomePage";       
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
@@ -15,9 +12,8 @@ import AppPage from "./pages/AppPage";
 import CuisinesPage from "./pages/CuisinesPage";
 import ContactPage from "./pages/ContactPage";
 import RestaurantsPage from './pages/RestaurantsPage';
-import OrdersPage from "./pages/OrdersPage"; // <--- NOWA STRONA HISTORII
+import OrdersPage from "./pages/OrdersPage";
 
-// --- PANELE ---
 import OwnerDashboard from "./pages/OwnerDashboard";
 import AdminDashboard from "./pages/AdminDashboard"; 
 import AdminUsers from "./pages/AdminUsers";
@@ -27,7 +23,6 @@ import AdminRestaurants from "./pages/AdminRestaurants";
 import Profile from "./pages/Profile";
 
 
-// --- OCHRONIARZ (GUARD) ---
 const AdminGuard = ({ children }) => {
   const userRole = localStorage.getItem("user_role");
   const normalizedRole = userRole ? userRole.trim().toLowerCase() : "";

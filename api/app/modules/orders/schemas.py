@@ -2,9 +2,6 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
-# =======================
-# ORDER ITEM SCHEMAS
-# =======================
 class OrderItemCreate(BaseModel):
     product_id: int
     quantity: int
@@ -14,11 +11,9 @@ class OrderItemCreate(BaseModel):
 class OrderItemResponse(OrderItemCreate):
     id: int
     class Config:
-        from_attributes = True  # Zamiast orm_mode dla Pydantic v2
+        from_attributes = True 
 
-# =======================
-# ORDER SCHEMAS
-# =======================
+
 class OrderCreate(BaseModel):
     restaurant_id: int
     total_amount: float
@@ -42,20 +37,16 @@ class OrderResponse(BaseModel):
     document_type: str
     nip: Optional[str]
 
-    remarks: Optional[str] = None   # ⬅⬅⬅ TO DODAJ
+    remarks: Optional[str] = None
 
     items: List[OrderItemResponse]
     
-    # Pola z informacjami o restauracji
     restaurant_name: str
     restaurant_address: str
     
     class Config:
         from_attributes = True
 
-# =======================
-# NOWY SCHEMAT: ZMIANA STATUSU
-# =======================
 class OrderStatusUpdate(BaseModel):
     new_status: str
 

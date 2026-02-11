@@ -57,7 +57,7 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
                       className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl mb-2 border dark:border-gray-700"
                     >
                       <div>
-                        <h4 className="font-bold">{item.name}</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
                         <span className="text-purple-600 font-bold">{item.price.toFixed(2)} zł</span>
                         {item.description && (
                           <p className="text-gray-500 dark:text-gray-400 text-sm">{item.description}</p>
@@ -72,7 +72,7 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
                                 onClick={() => removeFromCart(item.id)}
                                 className="w-8 h-8 rounded-full bg-red-100 text-red-600 font-bold"
                               >−</button>
-                              <span className="min-w-[24px] text-center font-bold">{qty}</span>
+                              <span className="min-w-[24px] text-center font-bold text-gray-900 dark:text-white">{qty}</span>
                             </>
                           )}
                           <button
@@ -93,10 +93,10 @@ const MenuModal = ({ isOpen, onClose, restaurant, products }) => {
 
         {/* STICKY KOSZYK */}
         {cartCount > 0 && canOrder && (
-          <div className="p-4 border-t bg-white dark:bg-gray-800 rounded-b-2xl">
+          <div className="p-4 border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-b-2xl">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold">🛒 {cartCount} produktów</span>
-              <span className="font-bold text-purple-600">{cartTotal.toFixed(2)} zł</span>
+              <span className="font-bold text-gray-900 dark:text-white">🛒 {cartCount} produktów</span>
+              <span className="font-bold text-purple-400">{cartTotal.toFixed(2)} zł</span>
             </div>
             <button
               className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold"

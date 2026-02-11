@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-# --- Produkty ---
 class ProductBase(BaseModel):
     name: str
     price: float
@@ -21,7 +20,6 @@ class Product(ProductBase):
     class Config:
         from_attributes = True
 
-# --- Pomocniczy schemat właściciela ---
 class OwnerInfo(BaseModel):
     first_name: str
     last_name: str
@@ -29,7 +27,6 @@ class OwnerInfo(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Restauracje ---
 class RestaurantBase(BaseModel):
     name: str
     cuisines: str
@@ -41,7 +38,6 @@ class RestaurantBase(BaseModel):
 class RestaurantCreate(RestaurantBase):
     rating: Optional[float] = 0.0
 
-# --- EDYCJA DANYCH RESTAURACJI (Brakujący element) ---
 class RestaurantUpdate(BaseModel):
     name: Optional[str] = None
     cuisines: Optional[str] = None
@@ -51,7 +47,6 @@ class RestaurantUpdate(BaseModel):
     rating: Optional[float] = None
     description: Optional[str] = None
 
-# --- AKTUALIZACJA STATUSU ---
 class RestaurantStatusUpdate(BaseModel):
     status: str
     rejection_reason: Optional[str] = None

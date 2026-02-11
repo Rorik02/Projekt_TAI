@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import RestaurantsList from '../components/RestaurantsList/RestaurantsList';
 import MapComponent from '../components/Map/Map';
 import Modal from '../components/Modal/Modal';
-import MenuModal from '../components/MenuModal/MenuModal'; // ← DODAJ IMPORT
+import MenuModal from '../components/MenuModal/MenuModal';
 
 const RestaurantsPage = () => {
     const token = localStorage.getItem("access_token");
 
-    // DANE
     const [restaurants, setRestaurants] = useState([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState(null);
     const [user, setUser] = useState(null);
@@ -17,12 +16,11 @@ const RestaurantsPage = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null)
+    const [filteredRestaurants, setFilteredRestaurants] = useState([]);
 
-    // MODAL ADRESU
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [newAddress, setNewAddress] = useState({ name: "", city: "", street: "", number: "" });
 
-    // DODAJEMY STAN DLA MENU MODAL
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuProducts, setMenuProducts] = useState([]);
     const [menuRestaurant, setMenuRestaurant] = useState(null);
@@ -45,7 +43,7 @@ const RestaurantsPage = () => {
             );
             if (!res.ok) throw new Error("Nie udało się pobrać opinii");
             const data = await res.json();
-            setReviews(data); // zapisujemy opinie w stanie
+            setReviews(data);
         } catch (err) {
             setError(err.message);
             setReviews([]);
@@ -58,7 +56,6 @@ const RestaurantsPage = () => {
 }, [selectedRestaurant]);
 
 
-    // --- FUNKCJE FETCH ---
     const fetchRestaurants = async () => {
         try {
             const res = await fetch("http://127.0.0.1:8000/restaurants");
@@ -76,10 +73,20 @@ const RestaurantsPage = () => {
             });
             if (res.ok) {
                 const data = await res.json();
+                console.log("DANE Z BACKENDU:", data);
                 setUser(data);
+
+                let addressString = "Brak adresu głównego";
+                
+                if (data.street && data.city) {
+                     addressString = `${data.street} ${data.number || ''}, ${data.city}`;
+                } else if (data.city) {
+                     addressString = data.city;
+                }
+
                 setSelectedAddress({
                     type: "main",
-                    full: `${data.street}, ${data.city}`,
+                    full: addressString,
                     ...data
                 });
             }
@@ -122,7 +129,6 @@ const RestaurantsPage = () => {
         }
     };
 
-    // --- NOWA FUNKCJA DO OTWIERANIA MENU ---
     const handleOpenMenu = async (restaurant) => {
         setMenuRestaurant(restaurant);
         setIsMenuOpen(true);
@@ -162,7 +168,8 @@ const RestaurantsPage = () => {
                         restaurants={restaurants} 
                         onSelectRestaurant={setSelectedRestaurant} 
                         selectedId={selectedRestaurant?.id}
-                        onShowMenu={handleOpenMenu} // ← PRZEKAZUJEMY FUNKCJĘ
+                        onShowMenu={handleOpenMenu}
+                        onFilterChange={setFilteredRestaurants}
                     />
                 </div>
 
@@ -229,10 +236,10 @@ const RestaurantsPage = () => {
                     {/* MAPA */}
                     <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden relative border border-gray-200 dark:border-gray-700">
                         <MapComponent 
-                            restaurants={restaurants} 
+                            restaurants={filteredRestaurants}
                             selectedRestaurant={selectedRestaurant}
-                            onSelect={setSelectedRestaurant} // to już masz
-                            onShowMenu={handleOpenMenu} // ← DODAJEMY FUNKCJĘ
+                            onSelect={setSelectedRestaurant}
+                            onShowMenu={handleOpenMenu}
                         />
                     </div>
                 </div>

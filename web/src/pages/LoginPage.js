@@ -32,14 +32,11 @@ const LoginPage = () => {
         throw new Error(data.detail || "Błąd logowania");
       }
 
-      // --- KLUCZOWE: ZAPISYWANIE SESJI ---
-      // Dzięki temu po F5 nadal będziesz zalogowany!
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user_role', data.role);
       localStorage.setItem('user_name', data.first_name);
       localStorage.setItem('user_last_name', data.last_name);
 
-      // Przekierowanie w zależności od roli
       if (data.role === 'admin') {
         navigate('/admin');
       } else if (data.role === 'właściciel' || data.role === 'owner') {
@@ -48,7 +45,6 @@ const LoginPage = () => {
         navigate('/restaurants');
       }
       
-      // Wymuszamy odświeżenie paska nawigacji (Navbar)
       window.dispatchEvent(new Event("storage")); 
 
     } catch (err) {

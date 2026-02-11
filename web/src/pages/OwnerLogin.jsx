@@ -15,7 +15,7 @@ const OwnerLogin = () => {
 
     try {
       
-      const response = await fetch("http://127.0.0.1:8000/owners/login", { // Sprawdź czy ten endpoint istnieje w Twoim backendzie!
+      const response = await fetch("http://127.0.0.1:8000/owners/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
